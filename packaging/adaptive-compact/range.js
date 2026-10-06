@@ -98,7 +98,9 @@ export function selectAdaptiveRange(session, measurement, spec) {
     if (keepFromIdx <= firstIdx)
         return null;
     // 4. Minimum yield: a summarization call is not free.
-    const tokens = priced.slice(firstIdx, keepFromIdx).reduce((total, node) => total + node.tokens, 0);
+    let tokens = 0;
+    for (let index = firstIdx; index < keepFromIdx; index += 1)
+        if (index in priced) tokens += priced[index].tokens;
     if (tokens < spec.minCompactTokens)
         return null;
     return { start: nodes[firstIdx], end: nodes[keepFromIdx - 1], tokens };

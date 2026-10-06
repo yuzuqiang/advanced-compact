@@ -11,3 +11,4 @@ jobs:
       - run: npm run check:packaging
       - run: npm run check:publication
       - run: npm run check:harness
+      - run: npm run check:performance

@@ -861,33 +861,22 @@ export function normalizeDeliverableLabel(label) {
  *   accounted for.
  */
 export function unresolvedDeliverables(anchors, trackedLabels) {
-    const deliverables = [...anchors.all, ...anchors.overflow]
-        .filter(anchor => anchor.kind === 'deliverables');
-    if (deliverables.length === 0)
-        return [];
-    const countByLabel = new Map();
-    for (const anchor of deliverables) {
-        const label = deliverableLabel(anchor.text);
-        if (label === undefined)
-            continue;
-        const key = normalizeDeliverableLabel(label);
-        countByLabel.set(key, (countByLabel.get(key) ?? 0) + 1);
+    const byLabel = new Map();
+    for (const group of [anchors.all, anchors.overflow]) {
+        for (const anchor of group) {
+            if (anchor.kind !== 'deliverables') continue;
+            const label = deliverableLabel(anchor.text);
+            if (label === undefined) continue;
+            const key = normalizeDeliverableLabel(label);
+            const prior = byLabel.get(key);
+            if (prior === undefined) byLabel.set(key, {label, anchor, count: 1});
+            else prior.count += 1;
+        }
     }
     const unresolved = [];
-    const pushed = new Set();
-    for (const anchor of deliverables) {
-        const label = deliverableLabel(anchor.text);
-        if (label === undefined)
-            continue;
-        const key = normalizeDeliverableLabel(label);
-        if (pushed.has(key))
-            continue;
-        const colliding = (countByLabel.get(key) ?? 0) > 1;
-        const undelivered = deliveryStillPending(anchor, anchors);
-        if (!colliding && !undelivered && trackedLabels.has(key))
-            continue;
-        pushed.add(key);
-        unresolved.push({ label, anchor });
+    for (const [key, {label, anchor, count}] of byLabel) {
+        if (count === 1 && !deliveryStillPending(anchor, anchors) && trackedLabels.has(key)) continue;
+        unresolved.push({label, anchor});
     }
     return unresolved;
 }
@@ -1197,6 +1186,13 @@ function estimateTokens(text) {
  * This exposes labels, URIs and credentials split across block boundaries.
  */
 export function coalescedBlockText(blocks) {
+    if (blocks.length === 1) {
+        const block = blocks[0];
+        if (block.type === 'text' || block.type === 'reasoning') {
+            const value = block.text;
+            return typeof value === 'string' ? value : [value].join('');
+        }
+    }
     const parts = [];
     let run = [];
     const flushRun = () => {

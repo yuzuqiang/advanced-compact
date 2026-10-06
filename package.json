@@ -1,7 +1,7 @@
 {
   "name": "adaptive-compact-workspace",
   "private": true,
-  "version": "0.1.22",
+  "version": "0.1.23",
   "type": "module",
   "description": "Final Adaptive Compact release, verification and native headless benchmark",
   "license": "MIT",
@@ -9,12 +9,15 @@
     "node": ">=24"
   },
   "scripts": {
-    "check:packaging": "node scripts/check-packaging-sync.mjs",
+    "check:packaging": "node scripts/check-packaging-sync.mjs && python3 checks/release-guards.py",
     "check:publication": "python3 scripts/check-publication.py",
     "check:harness": "python3 tests/check-harness.py",
     "test": "npm run test:release",
     "test:release": "python3 scripts/test-imported-release.py",
     "bench:headless": "python3 scripts/headless-run.py",
-    "bench:report": "python3 scripts/headless-report.py"
+    "bench:report": "python3 scripts/headless-report.py",
+    "check:performance": "node --test checks/performance.test.mjs",
+    "bench:cpu": "node scripts/bench-cpu.mjs",
+    "check:native-cancellation": "node --test checks/native-cancellation.test.mjs"
   }
 }

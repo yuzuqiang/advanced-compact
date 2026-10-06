@@ -17,7 +17,9 @@ args = parser.parse_args()
 profile = args.profile_dir.resolve()
 candidate = profile / 'node_modules/adaptive-compact'
 integrity = json.loads((ROOT / 'packaging/adaptive-compact/release-integrity.json').read_text())
-fixture_inventory = ROOT / 'releases' / integrity['version'] / 'test-integrity.json'
+# Optimized releases reuse the unchanged, privately frozen 0.1.22 test corpus.
+fixture_version = integrity.get('importedRelease', integrity)['version']
+fixture_inventory = ROOT / 'releases' / fixture_version / 'test-integrity.json'
 if not fixture_inventory.is_file() or not (ROOT / 'tests/fixtures').is_dir():
     parser.error('Full regressions require locally preserved fixtures and test-integrity.json; see README.md')
 subprocess.run(['node', str(ROOT / 'scripts/check-packaging-sync.mjs')], check=True)
