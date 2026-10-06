@@ -24,7 +24,7 @@ def main():
   for arm in (['baseline','compact'] if i%2==0 else ['compact','baseline']):
    id=c['id']+'-'+arm;out=r/('offline' if a.offline else 'jobs')/id;out.mkdir(parents=True,exist_ok=True)
    history=c['history']
-   config={'id':id,'root':str(r),'output':str(out),'arm':arm,'mode':'offline' if a.offline else 'formal','history':history,'maxCalls':3,'maxTotalCalls':18,'expectedModel':'qwen3.8-flash-next-iq3_xxs','expected':c['expected']};dump(out/'job.json',config)
+   config={'id':id,'root':str(r),'output':str(out),'arm':arm,'mode':'offline' if a.offline else 'formal','history':history,'maxCalls':3,'maxTotalCalls':18,'expectedModel':os.environ['STRATA_EXPECTED_MODEL'],'expected':c['expected']};dump(out/'job.json',config)
    patch=[{'id':'session-persistence-jsonl','config':{'root':str(state/id/'sessions'),'compression':'none'}},{'id':'storage-json','config':{'root':str(state/id/'storages')}},{'id':'fs-sandbox','config':{'cwd':str(state/id/'workspace')}},{'insert':[{'id':'headless-performance-observer','name':str(PROJECT/'scripts/headless-observer.mjs')}]}]
    if arm=='baseline':patch.append({'id':'adaptive-compact','config':compact})
    (state/id/'workspace').mkdir(parents=True,exist_ok=True);dump(out/'observer.patch.yml',patch)
@@ -42,7 +42,7 @@ def main():
     out=pathlib.Path(j['output']);wires=[json.loads(p.read_text()) for p in sorted(out.glob('request-*.json'))];counts=json.loads(subprocess.check_output([os.environ['STRATA_PYTHON'],str(counter)],input=json.dumps([x['body'] for x in wires]),text=True))
     assert all(x['planning_tokens']<=131072 for x in counts);admission.append({'id':j['id'],'wire_counts':counts,'purposes':[x['purpose'] for x in wires]})
    dump(r/'evidence/offline-admission.json',admission)
-   health=json.load(urllib.request.urlopen('http://127.0.0.1:8080/health',timeout=10));assert health['status']=='ok' and health['loaded'] and health['service']=='strata' and health['model']=='qwen3.8-flash-next-iq3_xxs' and health['max_context']==131072
+   health=json.load(urllib.request.urlopen('http://127.0.0.1:8080/health',timeout=10));assert health['status']=='ok' and health['loaded'] and health['service']=='strata' and health['model']==os.environ['STRATA_EXPECTED_MODEL'] and health['max_context']==131072
    code=r/'evidence/runtime-code';code.mkdir(parents=True,exist_ok=True)
    for name in ['headless-run.py','headless-observer.mjs','headless-report.py','count-strata-wire.py']:(code/name).write_bytes((PROJECT/'scripts'/name).read_bytes())
    dump(r/'evidence/release-integrity.json',release)

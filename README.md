@@ -79,6 +79,7 @@ export DSH_REPO="/path/to/deepseek-harness"
 export STRATA_REPO="/path/to/Strata"
 export STRATA_PYTHON="/path/to/Strata/.venv/bin/python"
 export STRATA_TOKENIZER_DIR="/path/to/tokenizer"
+export STRATA_EXPECTED_MODEL="your-local-model-id"
 
 compact_run="$(pwd)/results/headless-0.1.22-$(date +%Y%m%d-%H%M%S)"
 npm run bench:headless -- --run "$compact_run" --offline

@@ -5,6 +5,7 @@ import io
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
+import sys
 import tarfile
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -116,4 +117,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except ValueError as error:
+        print(f'Publication check failed: {error}', file=sys.stderr)
+        raise SystemExit(1)
