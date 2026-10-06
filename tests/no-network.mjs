@@ -6,7 +6,8 @@ import dgram from 'node:dgram';
 import dns from 'node:dns';
 import {syncBuiltinESMExports} from 'node:module';
 export const networkAttempts=[];
-function deny(...args) { networkAttempts.push(new Error().stack); throw new Error('OFFLINE HOTFIX CHECK: all network forbidden'); }
+function deny() { networkAttempts.push(new Error().stack); throw new Error('Offline regression forbids network access'); }
+process.once('beforeExit',()=>{if(networkAttempts.length)throw new Error('Offline regression attempted network access');});
 globalThis.fetch=deny;
 globalThis.WebSocket=class { constructor(){deny();} };
 http.request=http.get=https.request=https.get=deny;
