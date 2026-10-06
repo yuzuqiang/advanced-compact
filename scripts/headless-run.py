@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Run the real user headless profile with temporary observation/state overlays."""
 import argparse,datetime,hashlib,json,os,pathlib,subprocess,time,urllib.request,yaml,shutil
-PROJECT=pathlib.Path(__file__).resolve().parents[1];DSH=pathlib.Path(os.environ['DSH_REPO']).expanduser().resolve()
+PROJECT=pathlib.Path(__file__).resolve().parents[1]
 def dump(p,v):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(v,indent=2,ensure_ascii=False)+'\n')
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--run',type=pathlib.Path,required=True);ap.add_argument('--offline',action='store_true');ap.add_argument('--resume',action='store_true');a=ap.parse_args();r=a.run.resolve();r.mkdir(parents=True,exist_ok=True)
+ DSH=pathlib.Path(os.environ['DSH_REPO']).expanduser().resolve()
  freeze=r/'evidence/freeze.json'
  if freeze.exists() and (a.offline or not a.resume):raise RuntimeError('Frozen run exists; use a new directory for new tests')
  installed=pathlib.Path.home()/'.dsh/profiles/headless/node_modules/adaptive-compact'
