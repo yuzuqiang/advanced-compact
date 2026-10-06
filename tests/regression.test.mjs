@@ -74,8 +74,8 @@ test('exact source quote survives byte-for-byte; paraphrase and Unicode normaliz
 
 // Exercise the actual plugin's parse/admit/render branch, with an in-memory
 // summary transport and owned service stubs. No native transaction or model.
-async function replay(Engine, config, doc, messages) {
-    const engine = Object.create(Engine.prototype);
+async function replay(config, doc, messages) {
+    const engine = Object.create(AdaptiveCompactionEngine.prototype);
     engine.adaptive = config;
     engine.stats = {parseFailures:0,shapeRepairs:0};
     engine.ctx = {logger:{warn(){}}};
@@ -92,21 +92,21 @@ async function replay(Engine, config, doc, messages) {
     return engine.summarizeUnchecked({messages},{session:{}},new AbortController().signal);
 }
 test('guard disabled preserves original checkpoint rendering', async () => {
-    const b = await replay(AdaptiveCompactionEngine,resolveAdaptiveConfig({}),pilotDoc,[]);
+    const b = await replay(resolveAdaptiveConfig({}),pilotDoc,[]);
     assert.deepEqual(b.summary,[{type:'text',text:renderSummary(pilotDoc,anchors,1)}]);
 });
 test('guard integrates with split tool text and never trusts assistant claims', async () => {
     const doc = {...pilotDoc,files:[{path:'a.py',operation:'read',artifact:'current = current[token]'},pilotDoc.files[0]]};
     const messages = [{role:'tool',content:[{type:'text',text:'current = current['},{type:'text',text:'token]'}]},
         {role:'assistant',content:[{type:'text',text:pilotDoc.files[0].artifact}]}];
-    const result = await replay(AdaptiveCompactionEngine,resolveAdaptiveConfig({summary:{verbatimFileArtifacts:true}}),doc,messages);
+    const result = await replay(resolveAdaptiveConfig({summary:{verbatimFileArtifacts:true}}),doc,messages);
     assert(result.summary[0].text.includes('current = current[token]'));
     assert(!result.summary[0].text.includes('current[current[token]]'));
     assert(result.rawOutput[0].text.includes('current[current[token]]'));
 });
 test('checkpoint with only unsupported artifact does not bypass empty-summary gate', async () => {
     const doc = {schema_version:1,task_state:{goal:'',current_plan:[],completed:[],open:[]},files:[{path:'',operation:'',artifact:'invented'}],decisions:[],tests:[],errors:[],critical_facts:[],user_constraints:[],next_step:'',artifact_refs:[]};
-    await assert.rejects(replay(AdaptiveCompactionEngine,resolveAdaptiveConfig({summary:{verbatimFileArtifacts:true}}),doc,[]),{code:'COMPACTION_EMPTY_SUMMARY'});
+    await assert.rejects(replay(resolveAdaptiveConfig({summary:{verbatimFileArtifacts:true}}),doc,[]),{code:'COMPACTION_EMPTY_SUMMARY'});
 });
 for (const scenario of ['pinned-state','latest-correction','longer-pressure']) {
     test(`saved headless summary replay preserves six values: ${scenario}`, async () => {
@@ -114,8 +114,8 @@ for (const scenario of ['pinned-state','latest-correction','longer-pressure']) {
         const native = read(`${job}/native-result.json`), config = read(`${job}/job.json`);
         const raw = native.events.find(event=>event.type==='compaction/summary').data.rawOutput;
         const doc = parseSummaryDocument(raw.filter(block=>block.type==='text').map(block=>block.text).join(''),1);
-        const a = await replay(AdaptiveCompactionEngine,resolveAdaptiveConfig({}),doc,[]);
-        const b = await replay(AdaptiveCompactionEngine,resolveAdaptiveConfig({summary:{verbatimFileArtifacts:true}}),doc,[]);
+        const a = await replay(resolveAdaptiveConfig({}),doc,[]);
+        const b = await replay(resolveAdaptiveConfig({summary:{verbatimFileArtifacts:true}}),doc,[]);
         for (const value of Object.values(config.expected)) {
             assert(a.summary[0].text.includes(value));
             assert(b.summary[0].text.includes(value));

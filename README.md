@@ -55,9 +55,10 @@ pnpm dsh plugin --profile headless add "$plugin_tgz" --offline
 ```bash
 npm run check:packaging
 npm run check:publication
+npm run check:harness
 ```
 
-發行校驗檢查 27 個 payload 的清單、SHA-256、JavaScript 語法、必要依賴及來源版本正規化。發布檢查拒絕本地資料檔、本機個人路徑、常見憑證格式及未經審查的壓縮包；CI 執行兩項檢查。
+發行校驗檢查 27 個 payload 的清單、SHA-256、JavaScript 語法、必要依賴及來源版本正規化。發布檢查拒絕本地資料檔、本機個人路徑、常見憑證格式及未經審查的壓縮包。測試工具校驗使用 Python 3 標準庫，涵蓋恢復執行與派發紀錄；CI 執行三項檢查。
 
 完整 54 項回歸需 Python 3、已安裝的 dsh 套件，以及本地保存的 `tests/fixtures/` 與 `releases/0.1.22/test-integrity.json`。這些資料不隨 GitHub 倉庫分發。
 
@@ -88,6 +89,8 @@ npm run bench:report -- --run "$compact_run"
 ```
 
 離線步驟確認原生壓縮；正式派發前核查請求准入。正式步驟會呼叫模型，要求 Strata 的本機服務載入測試指定模型，服務上下文為 131,072 tokens。測試結果與原始證據僅在本地保存。三組固定回憶情境不能代表通用任務品質或任意摘要無損性。
+
+每次新測試使用新目錄；暫存狀態存於該目錄的 `state/`。已凍結的正式測試可加 `--resume` 繼續尚未嘗試的任務，需保留原位置、程式碼、設定及證據；失敗或部分派發的任務不可直接重跑。
 
 ## 資料與發布規則
 

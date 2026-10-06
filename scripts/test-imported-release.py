@@ -17,17 +17,19 @@ args = parser.parse_args()
 profile = args.profile_dir.resolve()
 candidate = profile / 'node_modules/adaptive-compact'
 integrity = json.loads((ROOT / 'packaging/adaptive-compact/release-integrity.json').read_text())
-assert integrity['version'] == '0.1.22'
+fixture_inventory = ROOT / 'releases' / integrity['version'] / 'test-integrity.json'
+if not fixture_inventory.is_file() or not (ROOT / 'tests/fixtures').is_dir():
+    parser.error('Full regressions require locally preserved fixtures and test-integrity.json; see README.md')
 subprocess.run(['node', str(ROOT / 'scripts/check-packaging-sync.mjs')], check=True)
 for name, digest in integrity['files'].items():
     assert hashlib.sha256((candidate / name).read_bytes()).hexdigest() == digest, name
-inventory = json.loads((ROOT / 'releases/0.1.22/test-integrity.json').read_text())
+inventory = json.loads(fixture_inventory.read_text())
 actual = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
           for p in (ROOT / 'tests').rglob('*') if p.is_file()}
 assert actual == inventory, 'Test or fixture inventory changed'
-output = (args.output or ROOT / f'results/release-0.1.22-{profile.name}').resolve()
+output = (args.output or ROOT / f"results/release-{integrity['version']}-{profile.name}").resolve()
 output.mkdir(parents=True, exist_ok=True)
-with tempfile.TemporaryDirectory(prefix='adaptive-compact-022-test-') as tmp:
+with tempfile.TemporaryDirectory(prefix='adaptive-compact-test-') as tmp:
     temp = Path(tmp)
     shutil.copytree(ROOT / 'tests', temp / 'tests')
     (temp / 'plugin').symlink_to(candidate, target_is_directory=True)

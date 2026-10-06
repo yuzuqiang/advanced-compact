@@ -1,5 +1,5 @@
 import './no-network.mjs';
-// Offline cancellation gates with new payload references ENABLED.
+// Offline cancellation gates with payload references enabled.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
