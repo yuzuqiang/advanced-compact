@@ -63,6 +63,13 @@ def inspect_file(name, data):
         inspect_bytes(name, data)
 
 
+def public_commit_identity(name, email, *, committer=False):
+    """Accept user noreply metadata or GitHub's exact server committer identity."""
+    return (email.endswith('@users.noreply.github.com')
+            or (committer and name == 'GitHub'
+                and email == 'noreply' + '@github.com'))
+
+
 def self_test():
     for name, data in [('README.md', b'/home/' + b'example-user/project'),
                        ('README.md', b'ghp_' + b'A' * 36),
@@ -102,9 +109,11 @@ def main():
     for revision in revisions:
         if revision:
             inspect_bytes('commit message', git('show', '-s', '--format=%B', revision))
-            for email in git('show', '-s', '--format=%ae%n%ce', revision).decode().splitlines():
-                if not email.endswith('@users.noreply.github.com'):
-                    raise ValueError('Commit metadata contains a non-GitHub-noreply email (value withheld)')
+            identity = git('show', '-s', '--format=%an%n%ae%n%cn%n%ce', revision).decode().splitlines()
+            if (len(identity) != 4
+                    or not public_commit_identity(identity[0], identity[1])
+                    or not public_commit_identity(identity[2], identity[3], committer=True)):
+                raise ValueError('Commit metadata contains a non-GitHub-noreply identity (value withheld)')
             records = git('ls-tree', '-rz', '--full-tree', revision).split(b'\0')
         else:
             records = git('ls-files', '--stage', '-z').split(b'\0')
