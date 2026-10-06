@@ -20,6 +20,8 @@ PATTERNS = {
     'GitHub token': rb'(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,})',
     'API key': rb'(?:sk-(?:proj-)?[A-Za-z0-9_-]{24,}|AKIA[A-Z0-9]{16})',
     'private key': rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----',
+    'private network address': rb'\b(?:10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2})\b',
+    'hardware address': rb'\b(?:[A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2}\b',
     'personal email': rb'\b[A-Za-z0-9._%+-]+@(?!users\.noreply\.github\.com\b|example\.(?:com|org|net|invalid)\b)[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b',
 }
 PATTERNS = {name: re.compile(pattern) for name, pattern in PATTERNS.items()}
@@ -40,7 +42,7 @@ def inspect_file(name, data):
     path = PurePosixPath(name)
     if (path.parts[0] in PRIVATE_ROOTS or name.startswith('tests/fixtures/')
             or any(part.startswith('.env') for part in path.parts)
-            or path.suffix in {'.zip', '.jsonl', '.csv', '.sse', '.log', '.bundle'}
+            or path.suffix in {'.zip', '.jsonl', '.csv', '.sse', '.log', '.txt', '.bundle'}
             or path.suffix == '.json' and name not in ALLOWED_JSON):
         raise ValueError(f'{name}: local data/configuration must not be published')
     if path.suffix == '.tgz':
@@ -64,6 +66,8 @@ def self_test():
     for name, data in [('README.md', b'/home/' + b'example-user/project'),
                        ('README.md', b'ghp_' + b'A' * 36),
                        ('README.md', b'-----BEGIN ' + b'PRIVATE KEY-----'),
+                       ('README.md', b'192.' + b'168.1.15'),
+                       ('README.md', b'00:11:22:' + b'33:44:55'),
                        ('releases/cleanup.json', b'{}'),
                        ('tests/fixtures/snapshot.json', b'{}')]:
         try:
