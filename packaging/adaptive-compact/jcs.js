@@ -36,5 +36,5 @@ export function canonicalizeJson(value) {
  */
 export function summarySha256(summary) {
     const canonical = canonicalizeJson(summary);
-    return createHash('sha256').update(Buffer.from(canonical, 'utf8')).digest('hex');
+    return createHash('sha256').update(canonical, 'utf8').digest('hex');
 }

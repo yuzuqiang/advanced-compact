@@ -67,7 +67,7 @@ export function toWireContentBlocks(blocks) {
                     // rendered block self-describing on its own, without relying on
                     // which node it happened to land in.
                     text: `[tool result ${block.toolCallId}${block.isError === true ? ' (error)' : ''}] `
-                        + toWireContentBlocks(block.content).map(inner => inner.text ?? '').join('\n'),
+                        + wireText(block.content),
                 });
                 break;
             case 'image':
@@ -75,6 +75,25 @@ export function toWireContentBlocks(blocks) {
         }
     }
     return out;
+}
+// Nested tool results need text only, not temporary wire-block objects.
+function wireText(blocks) {
+    const parts = [];
+    for (const block of blocks) {
+        switch (block.type) {
+            case 'text':
+            case 'reasoning':
+                if (block.text.length > 0) parts.push(block.text);
+                break;
+            case 'tool-call':
+                parts.push(`[tool call ${block.id}: ${block.name}] ${block.arguments}`);
+                break;
+            case 'tool-result':
+                parts.push(`[tool result ${block.toolCallId}${block.isError === true ? ' (error)' : ''}] ` + wireText(block.content));
+                break;
+        }
+    }
+    return parts.join('\n');
 }
 /**
  * Wire content blocks back to domain form, for a sidecar's returned

@@ -13,6 +13,7 @@ ALLOWED_JSON = {'package.json', 'packaging/adaptive-compact/package.json',
                 'packaging/artifact-store/package.json',
                 'packaging/adaptive-compact/release-integrity.json'}
 ALLOWED_TAR = {'packaging/adaptive-compact/adaptive-compact-0.1.22.tgz',
+               'packaging/adaptive-compact/adaptive-compact-0.1.23.tgz',
                'packaging/adaptive-compact/source-candidate-0.1.22.tgz'}
 PRIVATE_ROOTS = {'releases', 'results', 'private', 'data', 'coverage', 'node_modules'}
 PATTERNS = {

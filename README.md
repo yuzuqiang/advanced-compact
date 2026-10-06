@@ -2,7 +2,7 @@
 
 DeepSeek Harness（dsh）的自適應上下文壓縮插件。
 
-**版本：0.1.22** · [安裝包](packaging/adaptive-compact/adaptive-compact-0.1.22.tgz) · [設定程式碼](packaging/adaptive-compact/config.js) · [發行完整性清單](packaging/adaptive-compact/release-integrity.json)
+**版本：0.1.23** · [安裝包](packaging/adaptive-compact/adaptive-compact-0.1.23.tgz) · [設定程式碼](packaging/adaptive-compact/config.js) · [發行完整性清單](packaging/adaptive-compact/release-integrity.json)
 
 [功能](#功能) · [安裝](#安裝) · [設定](#設定) · [驗證](#驗證) · [本地壓力測試](#本地壓力測試) · [資料與發布規則](#資料與發布規則)
 
@@ -17,23 +17,23 @@ DeepSeek Harness（dsh）的自適應上下文壓縮插件。
 
 ## 安裝
 
-發行校驗需要 Node.js 24 或以上及 `tar`。以下安裝命令使用 `sha256sum`，並需要已建置的 dsh checkout 與可用依賴。在本項目根目錄執行，並替換示例中的 checkout 路徑：
+發行校驗需要 Node.js 24 或以上與 Python 3。以下安裝命令使用 `sha256sum`，並需要已建置的 dsh checkout 與可用依賴。在本項目根目錄執行，並替換示例中的 checkout 路徑：
 
 ```bash
-plugin_source="$(pwd)/packaging/adaptive-compact/adaptive-compact-0.1.22.tgz"
+plugin_source="$(pwd)/packaging/adaptive-compact/adaptive-compact-0.1.23.tgz"
 plugin_digest="$(sha256sum "$plugin_source")"
 plugin_dir="$HOME/.cache/adaptive-compact/${plugin_digest%% *}"
 mkdir -p "$plugin_dir"
-plugin_tgz="$plugin_dir/adaptive-compact-0.1.22.tgz"
+plugin_tgz="$plugin_dir/adaptive-compact-0.1.23.tgz"
 cp "$plugin_source" "$plugin_tgz"
 cd /path/to/deepseek-harness
 pnpm dsh plugin --profile web add "$plugin_tgz" --offline
 pnpm dsh plugin --profile headless add "$plugin_tgz" --offline
 ```
 
-正式版本為 `0.1.22`。[來源候選](packaging/adaptive-compact/source-candidate-0.1.22.tgz) 保留原始位元組，僅用於來源比對。正式包已清理失效文檔與 source map 引用、過時套件說明及兩處驗證錯誤提示，並正規化版本號；壓縮邏輯及隨包設定未改動。逐檔來源差異與正式包 SHA-256 記錄在發行完整性清單。
+`0.1.23` 包含六項經重複配對測量的 CPU 熱點優化；設定、摘要提示、正文去重規則及已測輸出保持一致。詳見 [10 輪性能實驗與未測範圍](docs/performance-0.1.23.md)。250 條訊息的合成串聯流程沒有顯著整體提速，因此不宣稱端到端延遲、token 成本或模型品質改善。
 
-此清理包與先前 `0.1.22` 的 SHA-256 不同；版本號相同，請以完整性清單區分包內容。上面使用按 SHA-256 區分的安裝路徑，避免 pnpm 沿用同版本、同路徑的舊 tgz 快取。
+[原始來源候選](packaging/adaptive-compact/source-candidate-0.1.22.tgz) 與 [清理後 0.1.22 包](packaging/adaptive-compact/adaptive-compact-0.1.22.tgz) 的位元組均保留，僅作版本來源校驗。新版以目前 GitHub 的鬆散原始碼建置，完整性清單記錄舊版來源、每個變更的前後 SHA-256 及新版包摘要。安裝仍使用按 SHA-256 區分的路徑，避免沿用舊 tgz 快取。
 
 ## 設定
 
@@ -63,9 +63,12 @@ pnpm dsh plugin --profile headless add "$plugin_tgz" --offline
 npm run check:packaging
 npm run check:publication
 npm run check:harness
+npm run check:performance
 ```
 
-發行校驗檢查 27 個 payload 的清單、SHA-256、JavaScript 語法、必要依賴、逐檔來源差異及套件操作欄位，拒絕失效文檔與 source map 引用。發布檢查拒絕本地資料檔、本機個人路徑、常見憑證格式及未經審查的壓縮包。測試工具校驗使用 Python 3 標準庫，涵蓋恢復執行與派發紀錄；CI 執行三項檢查。
+發行校驗檢查 27 個 payload 的清單、SHA-256、JavaScript 語法、必要依賴、歷史來源及新版逐檔變更，拒絕失效文檔與 source map 引用，並核對可重現封裝。發布檢查拒絕本地資料檔、本機個人路徑、常見憑證格式及未經審查的壓縮包。測試工具校驗涵蓋恢復執行與派發紀錄。
+
+`check:performance` 使用公開合成輸入，包含 1,678 個凍結基線輸出案例及額外邊界斷言；只模擬 DSH 的 checkpoint 標記與工具配對接縫，不等同原生整合測試。CI 執行以上四項檢查。已有相容 dsh 依賴的環境還可執行 `npm run check:native-cancellation`；它覆蓋三個取消時點，使用 mock adapter，禁止網路。新檢查放在 `checks/`，不改動原有凍結測試清單。
 
 完整 54 項回歸需 Python 3、已安裝的 dsh 套件，以及本地保存的 `tests/fixtures/` 與 `releases/0.1.22/test-integrity.json`。這些資料不隨 GitHub 倉庫分發。
 
@@ -89,7 +92,7 @@ export STRATA_PYTHON="/path/to/Strata/.venv/bin/python"
 export STRATA_TOKENIZER_DIR="/path/to/tokenizer"
 export STRATA_EXPECTED_MODEL="your-local-model-id"
 
-compact_run="$(pwd)/results/headless-0.1.22-$(date +%Y%m%d-%H%M%S)"
+compact_run="$(pwd)/results/headless-0.1.23-$(date +%Y%m%d-%H%M%S)"
 npm run bench:headless -- --run "$compact_run" --offline
 npm run bench:headless -- --run "$compact_run"
 npm run bench:report -- --run "$compact_run"

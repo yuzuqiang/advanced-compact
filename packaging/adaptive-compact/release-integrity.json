@@ -1,18 +1,16 @@
 {
-  "version": "0.1.22",
-  "sourceVersion": "0.1.22-local.2",
-  "sourceArchive": "source-candidate-0.1.22.tgz",
-  "sourceArchiveSha256": "598625285512fc56be30168d1631c92319d4dca74bd66ae49a413cac7a96c396",
-  "change": "Version normalized to 0.1.22; obsolete comments, missing source-map references, historical package metadata and two authentication-error messages cleaned. Executable JavaScript ASTs match the source after those two message updates; compression logic and bundle settings are unchanged.",
-  "tarball": "adaptive-compact-0.1.22.tgz",
-  "tarballSha256": "cb0efe9eb531baff457506c273c450720cd7368d93bb9f026a929890dd92d64a",
+  "schemaVersion": 2,
+  "version": "0.1.23",
+  "change": "Source changes against preserved 0.1.22. Hash verification does not replace tests or GitHub review.",
+  "tarball": "adaptive-compact-0.1.23.tgz",
+  "tarballSha256": "274c6c528db96b12fe4ae992f431eafd83a650f6cd2937de64aa9bdeb700b6d1",
   "files": {
-    "anchors.js": "fb8a4939733a64868a560f331bfd01df0801faacdc43d609b98c1c9033e0160a",
+    "anchors.js": "c236bd19fcae37e09a8c86b92e06a33589e565ea96db26b9a910744f01445d70",
     "config.js": "532b9c6dff4cb993c8cf77af12f49744c90c98d5be2dc847a2555c029ed574f1",
     "cordis.patch.yml": "3c5be8af9f3eccd86ced4523d340921a2f58cecc54002920710c79cd4e381d68",
     "flat-summary.js": "30446a278797f08e749c1a6257762f7ed27b3b33c4abc9da4e83237649f68561",
     "index.js": "da9b813a5093082c270514b3eda55a03f752b2d2d0dd57c727ba1b025d15259b",
-    "jcs.js": "57e871c309ac944635d70ee90a836da8e088b4bbfba10d70a4133149c6e321b2",
+    "jcs.js": "2aa77bd288c805f2b2088f3c115ee08f186c870154453debac2f2649a03d5224",
     "node_modules/@adaptive-compact/dsh-artifact-store/blob.js": "aaf888179e65c0869a1fa3ec02d41b7c8b15ce9056c64e40eb4968f78279a6a6",
     "node_modules/@adaptive-compact/dsh-artifact-store/chunk.js": "68506bc06f5715131ff4d1867c56ecc5df24a76a11096ff005e3f690fb17981c",
     "node_modules/@adaptive-compact/dsh-artifact-store/config.js": "a9eb46c3ada0996da6df7742bfa8f03d45fdf2b3360610a64947733cc191be54",
@@ -25,115 +23,194 @@
     "node_modules/@adaptive-compact/dsh-artifact-store/tools.js": "1bd86a52fe0c03ffab6fac0a4119fe03546deb574e32837ffe35d8475bdc198e",
     "node_modules/@adaptive-compact/dsh-artifact-store/types.js": "f01b7cad40d7d9d9598beb12497f3d8472aa9d381dfb43b4275bb0a098b19c06",
     "node_modules/@adaptive-compact/dsh-artifact-store/uri.js": "1c155a2cdf3acbb5bca69a7473a69942ffee8ef09f366925c9abd344d9a84582",
-    "package.json": "d4019cdf57e14e3aab2aabbd3fd49b8a86088ba212a18b73c8a1fb7213a4f14b",
+    "package.json": "104126ae9b4c2b1e25438c895497c4266390532cfad1b208784053a767596ab3",
     "policy.js": "81b57b0cd0f59dfa6e0ae2440339c5ad9510c44e55de7e4aafe68b549a54a0fc",
     "prompt.js": "e0fa22a2d8a81960597eda95a578aa277c8d121ef00e0602d4989480d36e6e3f",
-    "range.js": "4dcff121ffb51aafee331206c8e0a7948e6a59dd54b799a788f1109ab453d530",
+    "range.js": "503fd9a588d66e6de63856a8a8cda89e6a6d9412d55d1398aca1f0e6efef5fc9",
     "sidecar-client.js": "f21650f75e0039b91b6c24610dcb2eeb21d1beeadd70f9ba39b7176126d34005",
-    "sidecar-serialize.js": "2375ecf40d920c2b93089d806c1ae29717bb6575af3f1400276e6522f7b54f8d",
-    "summary.js": "24bd9a9c6adad7676368f1ee7385fc52ffa8757f724c62a4aa724f4ca1c7a25e",
+    "sidecar-serialize.js": "c61e55bfce755758307050fece17fb1da92b9400c32973e038b1160c5a96d7a4",
+    "summary.js": "7e8a04be3aac581e4faccc3555d40d1cd73f8e8348d2a57178f922a1ea8deccf",
     "types.js": "425ba1ba28dfa0ffeb8c4a20a570319e70e7b8350e3e497a50295f8958f311e2",
     "webhook.js": "cdab35885415712d6f116b969611f15c9c56e4a7f9f9590891e3aee80e10aabd"
   },
   "regression": {
     "expectedTests": 54
   },
-  "sourceChanges": {
+  "importedRelease": {
+    "version": "0.1.22",
+    "sourceVersion": "0.1.22-local.2",
+    "sourceArchive": "source-candidate-0.1.22.tgz",
+    "sourceArchiveSha256": "598625285512fc56be30168d1631c92319d4dca74bd66ae49a413cac7a96c396",
+    "change": "Version normalized to 0.1.22; obsolete comments, missing source-map references, historical package metadata and two authentication-error messages cleaned. Executable JavaScript ASTs match the source after those two message updates; compression logic and bundle settings are unchanged.",
+    "tarball": "adaptive-compact-0.1.22.tgz",
+    "tarballSha256": "cb0efe9eb531baff457506c273c450720cd7368d93bb9f026a929890dd92d64a",
+    "files": {
+      "anchors.js": "fb8a4939733a64868a560f331bfd01df0801faacdc43d609b98c1c9033e0160a",
+      "config.js": "532b9c6dff4cb993c8cf77af12f49744c90c98d5be2dc847a2555c029ed574f1",
+      "cordis.patch.yml": "3c5be8af9f3eccd86ced4523d340921a2f58cecc54002920710c79cd4e381d68",
+      "flat-summary.js": "30446a278797f08e749c1a6257762f7ed27b3b33c4abc9da4e83237649f68561",
+      "index.js": "da9b813a5093082c270514b3eda55a03f752b2d2d0dd57c727ba1b025d15259b",
+      "jcs.js": "57e871c309ac944635d70ee90a836da8e088b4bbfba10d70a4133149c6e321b2",
+      "node_modules/@adaptive-compact/dsh-artifact-store/blob.js": "aaf888179e65c0869a1fa3ec02d41b7c8b15ce9056c64e40eb4968f78279a6a6",
+      "node_modules/@adaptive-compact/dsh-artifact-store/chunk.js": "68506bc06f5715131ff4d1867c56ecc5df24a76a11096ff005e3f690fb17981c",
+      "node_modules/@adaptive-compact/dsh-artifact-store/config.js": "a9eb46c3ada0996da6df7742bfa8f03d45fdf2b3360610a64947733cc191be54",
+      "node_modules/@adaptive-compact/dsh-artifact-store/errors.js": "cd845d65e3011884c1b1532ca1e341aaf126c775fc9ad3e467f62e945ee7aa0f",
+      "node_modules/@adaptive-compact/dsh-artifact-store/index.js": "21b49991d2dc8dca1548075c9f4c517dd3162e781c063b8017590d7fe300ff10",
+      "node_modules/@adaptive-compact/dsh-artifact-store/package.json": "2a4fbf051ef3da5c35ea1b4ef132cd634849567de2ba09d93302ff3510713aca",
+      "node_modules/@adaptive-compact/dsh-artifact-store/redact.js": "61774ccc7fde9af7895e68f7996f7b7bb7d3a955bb2d6d4c582a80d654b7eb76",
+      "node_modules/@adaptive-compact/dsh-artifact-store/reference.js": "84df1535ff389080ee4e028ffb4758d8b44b20c8ffda42d6c9d2edbb601325f9",
+      "node_modules/@adaptive-compact/dsh-artifact-store/text.js": "2e2f2f6c57b504415577aa9b918cc1296deb1c4610d7a00e7037be393a52d4c7",
+      "node_modules/@adaptive-compact/dsh-artifact-store/tools.js": "1bd86a52fe0c03ffab6fac0a4119fe03546deb574e32837ffe35d8475bdc198e",
+      "node_modules/@adaptive-compact/dsh-artifact-store/types.js": "f01b7cad40d7d9d9598beb12497f3d8472aa9d381dfb43b4275bb0a098b19c06",
+      "node_modules/@adaptive-compact/dsh-artifact-store/uri.js": "1c155a2cdf3acbb5bca69a7473a69942ffee8ef09f366925c9abd344d9a84582",
+      "package.json": "d4019cdf57e14e3aab2aabbd3fd49b8a86088ba212a18b73c8a1fb7213a4f14b",
+      "policy.js": "81b57b0cd0f59dfa6e0ae2440339c5ad9510c44e55de7e4aafe68b549a54a0fc",
+      "prompt.js": "e0fa22a2d8a81960597eda95a578aa277c8d121ef00e0602d4989480d36e6e3f",
+      "range.js": "4dcff121ffb51aafee331206c8e0a7948e6a59dd54b799a788f1109ab453d530",
+      "sidecar-client.js": "f21650f75e0039b91b6c24610dcb2eeb21d1beeadd70f9ba39b7176126d34005",
+      "sidecar-serialize.js": "2375ecf40d920c2b93089d806c1ae29717bb6575af3f1400276e6522f7b54f8d",
+      "summary.js": "24bd9a9c6adad7676368f1ee7385fc52ffa8757f724c62a4aa724f4ca1c7a25e",
+      "types.js": "425ba1ba28dfa0ffeb8c4a20a570319e70e7b8350e3e497a50295f8958f311e2",
+      "webhook.js": "cdab35885415712d6f116b969611f15c9c56e4a7f9f9590891e3aee80e10aabd"
+    },
+    "regression": {
+      "expectedTests": 54
+    },
+    "sourceChanges": {
+      "anchors.js": {
+        "sourceSha256": "ef86055b7cc3f4fd11d7920a49b767129e2555b4270151aa752618a9f6303f95",
+        "kind": "comments"
+      },
+      "config.js": {
+        "sourceSha256": "62abd6e458de83986eae001a2506decb9988da7d03d326edd575e900dd7def4e",
+        "kind": "comments-and-auth-error-text"
+      },
+      "index.js": {
+        "sourceSha256": "d4c879a17644ea58b5f77e55da47416e1bc7203a338b88c9e04692e360f9c847",
+        "kind": "comments-and-auth-error-text"
+      },
+      "jcs.js": {
+        "sourceSha256": "62626125669d29a9ce953aa2644f7235cbacee3c6ad0d55f82e403b0bb8e3fc4",
+        "kind": "comments"
+      },
+      "node_modules/@adaptive-compact/dsh-artifact-store/blob.js": {
+        "sourceSha256": "ba85804b6d6cc29d1e8e5629b7d175b28dccdeb04683e77ef75f8b2990dce107",
+        "kind": "comments"
+      },
+      "node_modules/@adaptive-compact/dsh-artifact-store/chunk.js": {
+        "sourceSha256": "383123383372cd3dd78d910c0928f2a309324092a66752d557f386c029e0c6f8",
+        "kind": "comments"
+      },
+      "node_modules/@adaptive-compact/dsh-artifact-store/config.js": {
+        "sourceSha256": "85f21050b3afee96e7d772d1c30d1745a1186935be982c2986a26873de96348f",
+        "kind": "comments"
+      },
+      "node_modules/@adaptive-compact/dsh-artifact-store/errors.js": {
+        "sourceSha256": "166ba96afbd2f79e9af837258db39a188627af477938c40e4db6dcbd30c0b89f",
+        "kind": "comments"
+      },
+      "node_modules/@adaptive-compact/dsh-artifact-store/index.js": {
+        "sourceSha256": "589b826013fe78fe9bd37e9c1bc9f284a4bb844a2e9b6c29af595c192adaa784",
+        "kind": "comments"
+      },
+      "node_modules/@adaptive-compact/dsh-artifact-store/package.json": {
+        "sourceSha256": "57e19014b6e7113d29ec0828f9723c75a8d7a9ef669e3f225fe69b98ee573b07",
+        "kind": "package-metadata"
+      },
+      "node_modules/@adaptive-compact/dsh-artifact-store/redact.js": {
+        "sourceSha256": "7582f22f56ac98abe253c4a29d0d48373060a85c229c2bc508c1c827e523d960",
+        "kind": "comments"
+      },
+      "node_modules/@adaptive-compact/dsh-artifact-store/reference.js": {
+        "sourceSha256": "b230fc3505546b4604d185f26b8a0c784d91c5f016cbbb88a0375dc62fc8e0fc",
+        "kind": "comments"
+      },
+      "node_modules/@adaptive-compact/dsh-artifact-store/text.js": {
+        "sourceSha256": "3835aa321a7084954def49cc18f012c1d552c03fd3b3588916d8d5e2741f75a5",
+        "kind": "comments"
+      },
+      "node_modules/@adaptive-compact/dsh-artifact-store/tools.js": {
+        "sourceSha256": "667d5ab15017003cf0dbc0874b6e934ec987458aa7c2168b292cef348b8f03aa",
+        "kind": "comments"
+      },
+      "node_modules/@adaptive-compact/dsh-artifact-store/types.js": {
+        "sourceSha256": "c34975120c5391057f541a52141f7eb39aaf90b8dcc4419ba360ca55723558b3",
+        "kind": "comments"
+      },
+      "node_modules/@adaptive-compact/dsh-artifact-store/uri.js": {
+        "sourceSha256": "80fed81e4a5c2622c4c25493e0cacd1870be1a733b3ed44bf5cfbb82ae8250b8",
+        "kind": "comments"
+      },
+      "package.json": {
+        "sourceSha256": "759cff4a99a67824a4c02467d04c5dca81d044c98316558da09bae8db3092cef",
+        "kind": "package-metadata"
+      },
+      "policy.js": {
+        "sourceSha256": "5445996b954f8c0e3457529a5814f3b3c27d298197b9809920aeb9e7ff1c657c",
+        "kind": "comments"
+      },
+      "range.js": {
+        "sourceSha256": "c186dc29a30eda4b5892fcbb8b970ddda230b93a5b229f86f937a7cab2f405c5",
+        "kind": "comments"
+      },
+      "sidecar-client.js": {
+        "sourceSha256": "111076d18d0cec3dcdebb8036d8314f920a7b23998e9bb7abf21e893a32a6b39",
+        "kind": "comments"
+      },
+      "sidecar-serialize.js": {
+        "sourceSha256": "28300764c492ad45d48c133b91adcc817ffe85cb2e2dfa2c4653d5173addf34d",
+        "kind": "comments"
+      },
+      "summary.js": {
+        "sourceSha256": "da96729d626f0b68ee83b814ec739327ca749ecbbff9e37ac1d027c254013679",
+        "kind": "comments"
+      },
+      "types.js": {
+        "sourceSha256": "fa82fd2d1de13f918eeb2eeef5ba36e5969f27c9178a75f5f2b8febf03766f97",
+        "kind": "comments"
+      },
+      "webhook.js": {
+        "sourceSha256": "7f2850838e9feee296b88fdedbe8dd355f9d775a75fd451a13f910de5e986d00",
+        "kind": "comments"
+      }
+    }
+  },
+  "releaseChanges": {
     "anchors.js": {
-      "sourceSha256": "ef86055b7cc3f4fd11d7920a49b767129e2555b4270151aa752618a9f6303f95",
-      "kind": "comments"
-    },
-    "config.js": {
-      "sourceSha256": "62abd6e458de83986eae001a2506decb9988da7d03d326edd575e900dd7def4e",
-      "kind": "comments-and-auth-error-text"
-    },
-    "index.js": {
-      "sourceSha256": "d4c879a17644ea58b5f77e55da47416e1bc7203a338b88c9e04692e360f9c847",
-      "kind": "comments-and-auth-error-text"
+      "beforeSha256": "fb8a4939733a64868a560f331bfd01df0801faacdc43d609b98c1c9033e0160a",
+      "afterSha256": "c236bd19fcae37e09a8c86b92e06a33589e565ea96db26b9a910744f01445d70",
+      "kind": "source-change",
+      "note": "Measured rounds 3 and 5: fast path for one text/reasoning block; parse deliverable labels once while preserving collision, chronology and first-occurrence semantics."
     },
     "jcs.js": {
-      "sourceSha256": "62626125669d29a9ce953aa2644f7235cbacee3c6ad0d55f82e403b0bb8e3fc4",
-      "kind": "comments"
-    },
-    "node_modules/@adaptive-compact/dsh-artifact-store/blob.js": {
-      "sourceSha256": "ba85804b6d6cc29d1e8e5629b7d175b28dccdeb04683e77ef75f8b2990dce107",
-      "kind": "comments"
-    },
-    "node_modules/@adaptive-compact/dsh-artifact-store/chunk.js": {
-      "sourceSha256": "383123383372cd3dd78d910c0928f2a309324092a66752d557f386c029e0c6f8",
-      "kind": "comments"
-    },
-    "node_modules/@adaptive-compact/dsh-artifact-store/config.js": {
-      "sourceSha256": "85f21050b3afee96e7d772d1c30d1745a1186935be982c2986a26873de96348f",
-      "kind": "comments"
-    },
-    "node_modules/@adaptive-compact/dsh-artifact-store/errors.js": {
-      "sourceSha256": "166ba96afbd2f79e9af837258db39a188627af477938c40e4db6dcbd30c0b89f",
-      "kind": "comments"
-    },
-    "node_modules/@adaptive-compact/dsh-artifact-store/index.js": {
-      "sourceSha256": "589b826013fe78fe9bd37e9c1bc9f284a4bb844a2e9b6c29af595c192adaa784",
-      "kind": "comments"
-    },
-    "node_modules/@adaptive-compact/dsh-artifact-store/package.json": {
-      "sourceSha256": "57e19014b6e7113d29ec0828f9723c75a8d7a9ef669e3f225fe69b98ee573b07",
-      "kind": "package-metadata"
-    },
-    "node_modules/@adaptive-compact/dsh-artifact-store/redact.js": {
-      "sourceSha256": "7582f22f56ac98abe253c4a29d0d48373060a85c229c2bc508c1c827e523d960",
-      "kind": "comments"
-    },
-    "node_modules/@adaptive-compact/dsh-artifact-store/reference.js": {
-      "sourceSha256": "b230fc3505546b4604d185f26b8a0c784d91c5f016cbbb88a0375dc62fc8e0fc",
-      "kind": "comments"
-    },
-    "node_modules/@adaptive-compact/dsh-artifact-store/text.js": {
-      "sourceSha256": "3835aa321a7084954def49cc18f012c1d552c03fd3b3588916d8d5e2741f75a5",
-      "kind": "comments"
-    },
-    "node_modules/@adaptive-compact/dsh-artifact-store/tools.js": {
-      "sourceSha256": "667d5ab15017003cf0dbc0874b6e934ec987458aa7c2168b292cef348b8f03aa",
-      "kind": "comments"
-    },
-    "node_modules/@adaptive-compact/dsh-artifact-store/types.js": {
-      "sourceSha256": "c34975120c5391057f541a52141f7eb39aaf90b8dcc4419ba360ca55723558b3",
-      "kind": "comments"
-    },
-    "node_modules/@adaptive-compact/dsh-artifact-store/uri.js": {
-      "sourceSha256": "80fed81e4a5c2622c4c25493e0cacd1870be1a733b3ed44bf5cfbb82ae8250b8",
-      "kind": "comments"
+      "beforeSha256": "57e871c309ac944635d70ee90a836da8e088b4bbfba10d70a4133149c6e321b2",
+      "afterSha256": "2aa77bd288c805f2b2088f3c115ee08f186c870154453debac2f2649a03d5224",
+      "kind": "source-change",
+      "note": "Measured round 10: hash the same canonical UTF-8 string directly instead of allocating a caller-side Buffer."
     },
     "package.json": {
-      "sourceSha256": "759cff4a99a67824a4c02467d04c5dca81d044c98316558da09bae8db3092cef",
-      "kind": "package-metadata"
-    },
-    "policy.js": {
-      "sourceSha256": "5445996b954f8c0e3457529a5814f3b3c27d298197b9809920aeb9e7ff1c657c",
-      "kind": "comments"
+      "beforeSha256": "d4019cdf57e14e3aab2aabbd3fd49b8a86088ba212a18b73c8a1fb7213a4f14b",
+      "afterSha256": "104126ae9b4c2b1e25438c895497c4266390532cfad1b208784053a767596ab3",
+      "kind": "version-metadata",
+      "note": "Release version updated; operational package fields unchanged."
     },
     "range.js": {
-      "sourceSha256": "c186dc29a30eda4b5892fcbb8b970ddda230b93a5b229f86f937a7cab2f405c5",
-      "kind": "comments"
-    },
-    "sidecar-client.js": {
-      "sourceSha256": "111076d18d0cec3dcdebb8036d8314f920a7b23998e9bb7abf21e893a32a6b39",
-      "kind": "comments"
+      "beforeSha256": "4dcff121ffb51aafee331206c8e0a7948e6a59dd54b799a788f1109ab453d530",
+      "afterSha256": "503fd9a588d66e6de63856a8a8cda89e6a6d9412d55d1398aca1f0e6efef5fc9",
+      "kind": "source-change",
+      "note": "Measured round 1: avoid a sliced prefix array while preserving forward addition order and sparse/inherited slot semantics."
     },
     "sidecar-serialize.js": {
-      "sourceSha256": "28300764c492ad45d48c133b91adcc817ffe85cb2e2dfa2c4653d5173addf34d",
-      "kind": "comments"
+      "beforeSha256": "2375ecf40d920c2b93089d806c1ae29717bb6575af3f1400276e6522f7b54f8d",
+      "afterSha256": "c61e55bfce755758307050fece17fb1da92b9400c32973e038b1160c5a96d7a4",
+      "kind": "source-change",
+      "note": "Measured round 9: emit nested tool-result text without intermediate wire-block objects; preserve exact separators, IDs and errors."
     },
     "summary.js": {
-      "sourceSha256": "da96729d626f0b68ee83b814ec739327ca749ecbbff9e37ac1d027c254013679",
-      "kind": "comments"
-    },
-    "types.js": {
-      "sourceSha256": "fa82fd2d1de13f918eeb2eeef5ba36e5969f27c9178a75f5f2b8febf03766f97",
-      "kind": "comments"
-    },
-    "webhook.js": {
-      "sourceSha256": "7f2850838e9feee296b88fdedbe8dd355f9d775a75fd451a13f910de5e986d00",
-      "kind": "comments"
+      "beforeSha256": "24bd9a9c6adad7676368f1ee7385fc52ffa8757f724c62a4aa724f4ca1c7a25e",
+      "afterSha256": "7e8a04be3aac581e4faccc3555d40d1cd73f8e8348d2a57178f922a1ea8deccf",
+      "kind": "source-change",
+      "note": "Measured round 2: reuse normalized open labels during structured deliverable reconciliation."
     }
   }
 }

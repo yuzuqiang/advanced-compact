@@ -401,9 +401,14 @@ export function scrubUnresolvableUris(body, resolve) {
  * @returns `open`, with any unaccounted-for deliverable label appended.
  */
 export function reconcileOpenDeliverables(taskState, anchors) {
-    const trackedLabels = new Set([...taskState.completed, ...taskState.open]
-        .flatMap(entry => deliverableLabelsInSubject(entry))
-        .map(normalizeDeliverableLabel));
+    const openLabels = new Set();
+    for (const entry of taskState.open)
+        for (const label of deliverableLabelsInSubject(entry))
+            openLabels.add(normalizeDeliverableLabel(label));
+    const trackedLabels = new Set(openLabels);
+    for (const entry of taskState.completed)
+        for (const label of deliverableLabelsInSubject(entry))
+            trackedLabels.add(normalizeDeliverableLabel(label));
     const unresolved = unresolvedDeliverables(anchors, trackedLabels);
     if (unresolved.length === 0)
         return taskState.open;
@@ -436,7 +441,6 @@ export function reconcileOpenDeliverables(taskState, anchors) {
     // entry does not excuse a duplicate check here, since it already fails
     // to short-circuit `unresolved` itself for a collision, for the exact
     // reason above.
-    const openLabels = new Set(taskState.open.flatMap(entry => deliverableLabelsInSubject(entry)).map(normalizeDeliverableLabel));
     const missing = unresolved
         .filter(({ label }) => !openLabels.has(normalizeDeliverableLabel(label)))
         .map(({ label, anchor }) => unreconciledDeliverableNote(label, anchor));
