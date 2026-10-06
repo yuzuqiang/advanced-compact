@@ -1,0 +1,39 @@
+# adaptive-compact bundle patch.
+# Mounts this bundle's own compiled compaction-adaptive code as the
+# process-wide `compaction` service, REPLACING the native compaction-basic
+# backend (same mount pattern as dsh-codex-compact). A/B knobs preserve the
+# codex-compact live token budgets:
+#   thresholdRatio 0.25 / retainTokens 8192 / releaseRatio 0.2 / maxTokens 4096
+#   on top of adaptive-compact's own hysteresis/anchors/evidence machinery.
+#
+# `name:` below is the package specifier the Loader actually `import()`s —
+# a real, separate resolution step from anything a .js file `import`s
+# (Codex review, PR #23): it used to say
+# '@adaptive-compact/dsh-compaction-adaptive', the scoped name this code
+# has inside the dev repo's own workspace, which is NOT what this tarball
+# installs anything under. This tarball's own package.json names it
+# `adaptive-compact`, and that name's own index.js (this same compiled
+# code, `export default AdaptiveCompactionEngine`) is exactly what needs
+# loading — so that is the specifier the patch has to name, not the
+# workspace-internal one.
+- id: compaction-basic
+  disabled: true
+- insert:
+    - id: adaptive-compact
+      name: 'adaptive-compact'
+      inject: []
+      config:
+        thresholdRatio: 0.25
+        retainTokens: 8192
+        hysteresis:
+          releaseRatio: 0.2
+        summarizationProvider: ''
+        summarizationModel: ''
+        maxTokens: 4096
+        compactionRetries: 1
+        maxOverflowRetries: 1
+        modelPolicies: []
+        auto: true
+        # Cost candidate: reversible exact duplicate tool bodies in summary requests only.
+        summary:
+          dedupeToolPayloads: true

@@ -1,0 +1,41 @@
+{
+  "version": "0.1.22",
+  "sourceVersion": "0.1.22-local.2",
+  "sourceArchive": "source-candidate-0.1.22.tgz",
+  "sourceArchiveSha256": "598625285512fc56be30168d1631c92319d4dca74bd66ae49a413cac7a96c396",
+  "change": "Only package/package.json version normalized to 0.1.22; all other candidate bytes preserved, including dedupeToolPayloads=true bundle patch.",
+  "tarball": "adaptive-compact-0.1.22.tgz",
+  "tarballSha256": "b83053c1688e7b069ebc165c35c04627d1750205119370ce2a1213cfbcc3e82a",
+  "files": {
+    "anchors.js": "ef86055b7cc3f4fd11d7920a49b767129e2555b4270151aa752618a9f6303f95",
+    "config.js": "62abd6e458de83986eae001a2506decb9988da7d03d326edd575e900dd7def4e",
+    "cordis.patch.yml": "3c5be8af9f3eccd86ced4523d340921a2f58cecc54002920710c79cd4e381d68",
+    "flat-summary.js": "30446a278797f08e749c1a6257762f7ed27b3b33c4abc9da4e83237649f68561",
+    "index.js": "d4c879a17644ea58b5f77e55da47416e1bc7203a338b88c9e04692e360f9c847",
+    "jcs.js": "62626125669d29a9ce953aa2644f7235cbacee3c6ad0d55f82e403b0bb8e3fc4",
+    "node_modules/@adaptive-compact/dsh-artifact-store/blob.js": "ba85804b6d6cc29d1e8e5629b7d175b28dccdeb04683e77ef75f8b2990dce107",
+    "node_modules/@adaptive-compact/dsh-artifact-store/chunk.js": "383123383372cd3dd78d910c0928f2a309324092a66752d557f386c029e0c6f8",
+    "node_modules/@adaptive-compact/dsh-artifact-store/config.js": "85f21050b3afee96e7d772d1c30d1745a1186935be982c2986a26873de96348f",
+    "node_modules/@adaptive-compact/dsh-artifact-store/errors.js": "166ba96afbd2f79e9af837258db39a188627af477938c40e4db6dcbd30c0b89f",
+    "node_modules/@adaptive-compact/dsh-artifact-store/index.js": "589b826013fe78fe9bd37e9c1bc9f284a4bb844a2e9b6c29af595c192adaa784",
+    "node_modules/@adaptive-compact/dsh-artifact-store/package.json": "57e19014b6e7113d29ec0828f9723c75a8d7a9ef669e3f225fe69b98ee573b07",
+    "node_modules/@adaptive-compact/dsh-artifact-store/redact.js": "7582f22f56ac98abe253c4a29d0d48373060a85c229c2bc508c1c827e523d960",
+    "node_modules/@adaptive-compact/dsh-artifact-store/reference.js": "b230fc3505546b4604d185f26b8a0c784d91c5f016cbbb88a0375dc62fc8e0fc",
+    "node_modules/@adaptive-compact/dsh-artifact-store/text.js": "3835aa321a7084954def49cc18f012c1d552c03fd3b3588916d8d5e2741f75a5",
+    "node_modules/@adaptive-compact/dsh-artifact-store/tools.js": "667d5ab15017003cf0dbc0874b6e934ec987458aa7c2168b292cef348b8f03aa",
+    "node_modules/@adaptive-compact/dsh-artifact-store/types.js": "c34975120c5391057f541a52141f7eb39aaf90b8dcc4419ba360ca55723558b3",
+    "node_modules/@adaptive-compact/dsh-artifact-store/uri.js": "80fed81e4a5c2622c4c25493e0cacd1870be1a733b3ed44bf5cfbb82ae8250b8",
+    "package.json": "bfe524e5ec9ac77c8faaa88e156f2e192cf35df1216a9b730e10aee5357d60c7",
+    "policy.js": "5445996b954f8c0e3457529a5814f3b3c27d298197b9809920aeb9e7ff1c657c",
+    "prompt.js": "e0fa22a2d8a81960597eda95a578aa277c8d121ef00e0602d4989480d36e6e3f",
+    "range.js": "c186dc29a30eda4b5892fcbb8b970ddda230b93a5b229f86f937a7cab2f405c5",
+    "sidecar-client.js": "111076d18d0cec3dcdebb8036d8314f920a7b23998e9bb7abf21e893a32a6b39",
+    "sidecar-serialize.js": "28300764c492ad45d48c133b91adcc817ffe85cb2e2dfa2c4653d5173addf34d",
+    "summary.js": "da96729d626f0b68ee83b814ec739327ca749ecbbff9e37ac1d027c254013679",
+    "types.js": "fa82fd2d1de13f918eeb2eeef5ba36e5969f27c9178a75f5f2b8febf03766f97",
+    "webhook.js": "7f2850838e9feee296b88fdedbe8dd355f9d775a75fd451a13f910de5e986d00"
+  },
+  "regression": {
+    "expectedTests": 54
+  }
+}

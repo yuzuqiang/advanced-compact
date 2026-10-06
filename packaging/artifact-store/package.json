@@ -1,0 +1,28 @@
+{
+  "name": "@adaptive-compact/dsh-artifact-store",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./uri": "./uri.js",
+    "./types": "./types.js",
+    "./package.json": "./package.json",
+    "./redact": "./redact.js"
+  },
+  "files": [
+    "blob.js",
+    "chunk.js",
+    "config.js",
+    "errors.js",
+    "index.js",
+    "redact.js",
+    "reference.js",
+    "text.js",
+    "tools.js",
+    "types.js",
+    "uri.js",
+    "package.json"
+  ],
+  "comment": "Compiled distributable of packages/artifact-store, packaged the same way packaging/adaptive-compact/ packages compaction-adaptive: the workspace package.json's main/exports point at src/*.ts on purpose (this repo's own tests run it live via tsx), which Node's --experimental-strip-types refuses to load once it sits under a real node_modules/ tree (ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING) -- a real production failure this bundle exists to avoid. See scripts/check-packaging-sync.mjs and docs/11-review-log.md."
+}
