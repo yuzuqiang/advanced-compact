@@ -17,16 +17,23 @@ DeepSeek Harness（dsh）的自適應上下文壓縮插件。
 
 ## 安裝
 
-發行校驗需要 Node.js 24 或以上及 `tar`。插件安裝需要已建置的 dsh checkout 與可用依賴。在本項目根目錄執行，並替換示例中的 checkout 路徑：
+發行校驗需要 Node.js 24 或以上及 `tar`。以下安裝命令使用 `sha256sum`，並需要已建置的 dsh checkout 與可用依賴。在本項目根目錄執行，並替換示例中的 checkout 路徑：
 
 ```bash
-plugin_tgz="$(pwd)/packaging/adaptive-compact/adaptive-compact-0.1.22.tgz"
+plugin_source="$(pwd)/packaging/adaptive-compact/adaptive-compact-0.1.22.tgz"
+plugin_digest="$(sha256sum "$plugin_source")"
+plugin_dir="$HOME/.cache/adaptive-compact/${plugin_digest%% *}"
+mkdir -p "$plugin_dir"
+plugin_tgz="$plugin_dir/adaptive-compact-0.1.22.tgz"
+cp "$plugin_source" "$plugin_tgz"
 cd /path/to/deepseek-harness
 pnpm dsh plugin --profile web add "$plugin_tgz" --offline
 pnpm dsh plugin --profile headless add "$plugin_tgz" --offline
 ```
 
-正式版本為 `0.1.22`。[來源候選](packaging/adaptive-compact/source-candidate-0.1.22.tgz) 僅用於完整性比對；正式包只正規化 package.json 的版本號，其餘 26 個 payload 檔案與來源逐位元組一致。導入的編譯檔保留來源註解與打包背景；目前可操作設定以隨包補丁及下表為準。
+正式版本為 `0.1.22`。[來源候選](packaging/adaptive-compact/source-candidate-0.1.22.tgz) 保留原始位元組，僅用於來源比對。正式包已清理失效文檔與 source map 引用、過時套件說明及兩處驗證錯誤提示，並正規化版本號；壓縮邏輯及隨包設定未改動。逐檔來源差異與正式包 SHA-256 記錄在發行完整性清單。
+
+此清理包與先前 `0.1.22` 的 SHA-256 不同；版本號相同，請以完整性清單區分包內容。上面使用按 SHA-256 區分的安裝路徑，避免 pnpm 沿用同版本、同路徑的舊 tgz 快取。
 
 ## 設定
 
@@ -58,7 +65,7 @@ npm run check:publication
 npm run check:harness
 ```
 
-發行校驗檢查 27 個 payload 的清單、SHA-256、JavaScript 語法、必要依賴及來源版本正規化。發布檢查拒絕本地資料檔、本機個人路徑、常見憑證格式及未經審查的壓縮包。測試工具校驗使用 Python 3 標準庫，涵蓋恢復執行與派發紀錄；CI 執行三項檢查。
+發行校驗檢查 27 個 payload 的清單、SHA-256、JavaScript 語法、必要依賴、逐檔來源差異及套件操作欄位，拒絕失效文檔與 source map 引用。發布檢查拒絕本地資料檔、本機個人路徑、常見憑證格式及未經審查的壓縮包。測試工具校驗使用 Python 3 標準庫，涵蓋恢復執行與派發紀錄；CI 執行三項檢查。
 
 完整 54 項回歸需 Python 3、已安裝的 dsh 套件，以及本地保存的 `tests/fixtures/` 與 `releases/0.1.22/test-integrity.json`。這些資料不隨 GitHub 倉庫分發。
 

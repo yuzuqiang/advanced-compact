@@ -133,4 +133,3 @@ export class ReferenceStore {
         return this.all(digest).length;
     }
 }
-//# sourceMappingURL=reference.js.map

@@ -8,7 +8,7 @@
  *
  * Pure: no Context, no I/O, no clock, no randomness.
  *
- * @module @adaptive-compact/dsh-compaction-adaptive/anchors
+ * @module adaptive-compact/anchors
  */
 import { isCompactCheckpointSource } from '@deepseek-ai/dsh-compaction/checkpoint';
 import { ANCHOR_PRIORITY } from "./config.js";
@@ -53,7 +53,7 @@ const COMMAND_PATTERN = /^\s*\$\s+(.+)$/gm;
  * in ordinary prose (plans, steps, changelogs) and would flood a checkpoint
  * with items that were never separately-answerable deliverables to begin
  * with. Shared between the extraction pattern below and
- * {@link deliverableLabel}, which summary.ts's `reconcileOpenDeliverables()`
+ * {@link deliverableLabel}, which summary.js's `reconcileOpenDeliverables()`
  * uses to check the label against the model's own completed/open text — one
  * definition, so the two can never drift apart.
  */
@@ -145,7 +145,7 @@ const DELIVERABLE_LINE_START = new RegExp(`^( {0,3}(?:[-*+]\\s+|#{1,6}\\s+)?)(${
  * ordinary, unrelated prose than a numbered one is.
  */
 const NUMBERED_LIST_LINE = /^\s*\d+[.)]\s/;
-// NOT anchored at `^`: reconcileOpenDeliverables() (summary.ts) needs the
+// NOT anchored at `^`: reconcileOpenDeliverables() (summary.js) needs the
 // FIRST label mentioned anywhere in a completed/open entry, not only one
 // sitting at the entry's own literal start. A real checkpoint phrases
 // entries like "Compute Q6: sum of first 10 trace values..." — anchoring at
@@ -184,7 +184,7 @@ const DELIVERABLE_RANGE_AT_START = /^Q\d+\s*-\s*Q?\d+\b/i;
 /**
  * The first deliverable label mentioned anywhere in `text` (e.g. `Q3` out of
  * `Q3: What is...`, or out of `Compute Q6: ...`). Used both to parse a
- * verbatim deliverable anchor's own text and, by summary.ts's
+ * verbatim deliverable anchor's own text and, by summary.js's
  * `reconcileOpenDeliverables()`, to find which label (if any) a
  * completed/open entry is actually ABOUT.
  * @param text - a `kind: 'deliverables'` anchor's own text, or a
@@ -196,7 +196,7 @@ export function deliverableLabel(text) {
 }
 /**
  * Every deliverable label that OPENS its own sentence/clause/line in `text`
- * — built for prose-mode checkpoints (`nativeFallback()` in index.ts),
+ * — built for prose-mode checkpoints (`nativeFallback()` in index.js),
  * which have no `task_state.completed`/`open` list of discrete entries to
  * check one at a time the way `deliverableLabelsInSubject()` does; the
  * model's own prose IS the whole checkpoint.
@@ -736,7 +736,7 @@ const escapeDeliverableNewlines = (text) => text.replace(/\\/g, '\\\\').replace(
  */
 const unescapeDeliverableNewlines = (text) => (text.replace(/\\\\|\\n/g, match => (match === '\\n' ? '\n' : '\\')));
 /**
- * The bullet `reconcileOpenDeliverables()` (summary.ts) renders into
+ * The bullet `reconcileOpenDeliverables()` (summary.js) renders into
  * `## Pending Jobs` for a deliverable the model's own classification
  * dropped. Purely a nudge for the model working THIS round — carry-forward
  * to a LATER compaction is handled separately, by `renderAnchors()`'s own
@@ -777,7 +777,7 @@ export function unreconciledDeliverableNote(label, anchor) {
  * deliverable for no reason. `Task` has no such short form to fold — this
  * pattern never accepts a bare `T<n>` at all. Shared by every
  * label-tracking check in this module (Codex review, PR #26 round 8 —
- * extracted from `reconcileOpenDeliverables()`, summary.ts, so the prose-mode
+ * extracted from `reconcileOpenDeliverables()`, summary.js, so the prose-mode
  * check added that round could reuse it verbatim instead of drifting).
  */
 export function normalizeDeliverableLabel(label) {
@@ -797,7 +797,7 @@ export function normalizeDeliverableLabel(label) {
  * deliverable whose own seq is at or after `anchors.lastAssistantSeq` has no
  * assistant turn anywhere after it in the scanned nodes — automatic
  * compaction commonly runs with the CURRENT turn still open
- * (session-factory.ts's `closeOpenBracket()` doc: "Automatic compaction
+ * (upstream session code's `closeOpenBracket()` doc: "Automatic compaction
  * requires an OPEN turn"), so a deliverable asked in that open turn can
  * have zero responses after it while the summarizer still writes
  * `completed: ['Q1: computed']` — whether from genuine confusion about an
@@ -821,7 +821,7 @@ export function normalizeDeliverableLabel(label) {
  * automatic compaction on an oversized FIRST turn can run before the
  * assistant has answered anything at all, so nothing could truly be
  * "completed" yet. Implementing it broke two already-established, already-
- * tested behaviors (engine.spec.ts, round 10): a genuine restatement WITHIN
+ * tested behaviors (prose-mode regression coverage): a genuine restatement WITHIN
  * the current round's own prose — the compaction call itself being the
  * vehicle through which the model catches up on an unanswered question —
  * correctly suppresses this same nudge today, with zero prior assistant
@@ -848,7 +848,7 @@ export function normalizeDeliverableLabel(label) {
 
  * Shared by both of this module's tracking checks (Codex review, PR #26
  * round 8): the structured path's `reconcileOpenDeliverables()`
- * (summary.ts) builds `trackedLabels` from `task_state.completed`/`open`
+ * (summary.js) builds `trackedLabels` from `task_state.completed`/`open`
  * entries; the prose path's `unmentionedDeliverableNotes()` below builds it
  * from every label mentioned anywhere in the model's raw output text. Both
  * reduce to the identical question once `trackedLabels` exists — "which
@@ -914,7 +914,7 @@ function deliveryStillPending(anchor, anchors) {
  * by `unmentionedDeliverableNotes()` below. Back to label + optional
  * pointer only, same as its structured-mode sibling (Codex review, PR #26
  * round 10, reversing round 9's own full-text-embedding fix): round 10
- * gives `nativeFallback()` (index.ts) a genuine `## Anchors` block for
+ * gives `nativeFallback()` (index.js) a genuine `## Anchors` block for
  * every deliverable extracted THIS round, unconditionally — so "see
  * Anchors" is accurate again, exactly like the structured path, and this
  * note goes back to being a cross-reference rather than the only record.
@@ -933,22 +933,8 @@ export function unmentionedDeliverableNote(label, anchor) {
         + `an answer (machine-checked, see Anchors)${suffix}`;
 }
 /**
- * The prose-mode backstop `nativeFallback()` (index.ts) appends to the
- * model's own raw output, alongside its own `## Anchors` block (round 10 —
- * see that method's own doc). Prose has no `task_state.completed`/`open`
- * for `reconcileOpenDeliverables()` (summary.ts) to check against, so this
- * asks the only question available on that path: is each deliverable's
- * label mentioned anywhere in the text at all (Codex review, PR #26 round
- * 8: this local path has every source message available, unlike the
- * sidecar path's own documented scope boundary, docs/05-sidecar-protocol.md
- * §8 — there is no protocol gap here excusing the same silent drop). This
- * function only decides whether to add a NUDGE for the model working THIS
- * round — content preservation is now the Anchors block's job
- * unconditionally, not this note's (round 10): even a label the model DID
- * mention (suppressing this note) still gets its full text carried in
- * Anchors, so a bare status sentence like "Q1 remains unresolved" — which
- * satisfies the leading-label check without actually preserving anything —
- * no longer means the question's content is lost.
+ * Add notes for deliverable labels missing from prose summaries.
+ * The separately rendered Anchors block preserves each question verbatim.
  * @param anchors - the full anchor set, both kept and budget-evicted.
  * @param text - the model's own returned checkpoint text.
  * @returns one machine-checked note per unmentioned or colliding label.
@@ -970,7 +956,7 @@ function escapeRegExpLiteral(text) {
 }
 /**
  * The exact heading text every caller that appends a `renderAnchors()`
- * block (`nativeFallback()`, `sidecarSummarize()` — both in index.ts) must
+ * block (`nativeFallback()`, `sidecarSummarize()` — both in index.js) must
  * render, and the ONLY text `anchorsFromCheckpoint()` (below) will accept
  * as marking a genuine one. Exported so those callers use this constant
  * directly instead of duplicating the literal string at each call site,
@@ -988,7 +974,7 @@ export const ANCHORS_BLOCK_HEADING = '## Anchors (verbatim, machine-extracted �
  * human actually asked (`"Q1: Explain ## Anchors"`, discussing this very
  * feature) — which is exactly the false-positive `neutralizeAnchorImpersonation()`
  * below must NOT rewrite, and, on the sidecar path, would mutate content
- * `findMissingAnchors()` (index.ts, INT-18/SEC-07) already verified was
+ * `findMissingAnchors()` (index.js, INT-18/SEC-07) already verified was
  * reproduced verbatim, breaking that just-established guarantee (Codex
  * review, PR #26 round 6). `anchorsFromCheckpoint()` is tightened the
  * identical way, for the identical reason: a real impersonation attempt
@@ -1035,50 +1021,9 @@ const ANCHOR_HEADING_LINE = new RegExp(`^${escapeRegExpLiteral(ANCHORS_BLOCK_HEA
 /** Same pattern, `g`-flagged for `neutralizeAnchorImpersonation()`'s replace-all. */
 const ANCHOR_HEADING_LINE_G = new RegExp(`^${escapeRegExpLiteral(ANCHORS_BLOCK_HEADING)}`, 'gm');
 /**
- * Break the ONE literal string `anchorsFromCheckpoint()` below keys its
- * entire trust decision on, in text that did NOT come from this module's
- * own `renderAnchors()`.
- *
- * Upstream applies the identical compaction-checkpoint source marker to a
- * checkpoint's message regardless of which code path produced it — local
- * structured, prose, OR the sidecar transport (index.ts's `sidecarSummarize()`).
- * `anchorsFromCheckpoint()` has no way to tell those apart; it just checks
- * whether the text contains `"## Anchors"`. A sidecar is a separate,
- * external service (docs/05-sidecar-protocol.md) whose own LLM can
- * hallucinate exactly the way a local one can (round 3's `deliverable_ref`
- * fix already covers the local model-authored-task case) — nothing stops
- * its free-text response from CONTAINING that exact heading, whether by
- * coincidence or by an adversarial/compromised sidecar crafting it
- * deliberately, and getting the SAME "verbatim, machine-extracted" trust a
- * genuine local anchor block gets on the next compaction (Codex review, PR
- * #26 round 4). Called on the sidecar's final summary content before it
- * ever becomes a checkpoint; never on this module's own `renderAnchors()`
- * output, which is the one thing actually allowed to say it.
- *
- * Deliberately UNCONDITIONAL — every `"## Anchors"`-shaped line is rewritten,
- * with no exemption for any substring, including a verified anchor's own
- * text (Codex review, PR #26 round 13, reversing round 12's own
- * `exemptSubstrings` parameter). Round 12 tried exempting each anchor's own
- * verbatim text so a legitimate multiline deliverable containing a
- * `"## Anchors"`-shaped line of its own (`"Q1:\n## Anchors semantics?"`,
- * a real human asking about this very feature) would not get mangled after
- * `findMissingAnchors()` (index.ts) already confirmed it was reproduced
- * verbatim. But protecting the HEADING protects whatever immediately
- * follows it too, from this function's own point of view — it cannot tell
- * "an attacker wrapped a real anchor's own heading-shaped line, then
- * appended fabricated `- deliverable: ...` lines right after it" from "nothing
- * unusual is here." `anchorsFromCheckpoint()` below trusts everything shaped
- * like an anchor line after ANY surviving heading, with no way to tell why
- * it survived, so a sidecar could smuggle a fully attacker-authored
- * "Anchors" block past this function by piggybacking it onto a real
- * anchor's own heading-shaped substring. Closing that means never letting
- * any heading survive, full stop — the "don't silently corrupt an
- * already-verified anchor" half of round 12's own motivation is instead
- * handled by index.ts's anchors-contract check running AFTER this function,
- * against the fully-neutralized text: if this unconditional rewrite happens
- * to alter a real anchor's own heading-shaped line, that check now correctly
- * treats it as "not reproduced verbatim" and fails open, rather than this
- * function silently making an exception for it.
+ * Neutralize every Anchors heading in external summary text.
+ * Only locally rendered anchor blocks may carry checkpoint trust.
+ * No substring is exempt; the caller checks anchor preservation after rewriting.
  * @param text - sidecar-response-derived checkpoint content.
  * @returns `text` with every heading-shaped line broken into inert prose.
  */
@@ -1200,7 +1145,7 @@ function anchorsFromCheckpoint(text, seq, kinds) {
         // multiple genuinely-distinct occurrences the FIRST extraction pass
         // correctly kept separate (two different human turns asking the
         // identical "Q1: ..." text, say) the moment push()'s own (seq, text)
-        // dedup key (anchors.ts, round 4's fix) sees an identical pair twice.
+        // dedup key (anchors.js, round 4's fix) sees an identical pair twice.
         // Synthesized here, not a real event index: negative (never collides
         // with a genuine seq or the `-1` "no alignment" sentinel, since it is
         // never exactly -1) and widely spaced per source checkpoint so two
@@ -1248,19 +1193,8 @@ function estimateTokens(text) {
     return Math.ceil(text.length / 4);
 }
 /**
- * `text`/`reasoning` content as a provider would actually receive it: runs
- * of adjacent `text`/`reasoning` blocks joined with NO separator (matching
- * how `redactMessages()` already coalesces the identical shape for
- * credential redaction), recursing into `tool-result` blocks' own nested
- * content. A label (or a URI, or a credential) split across two adjacent
- * blocks is invisible to a scan of each block in isolation — or wrongly
- * treated as line-initial when it is not — but is one contiguous string to
- * whatever provider ultimately receives these blocks.
- *
- * Moved here from `index.ts` (Codex review, PR #26 round 20) so
- * `textOf()`, below, can share the identical coalescing instead of
- * re-implementing a subtly different one — `index.ts` now imports it back
- * from here.
+ * Join adjacent text and reasoning blocks without separators, including nested tool results.
+ * This exposes labels, URIs and credentials split across block boundaries.
  */
 export function coalescedBlockText(blocks) {
     const parts = [];
@@ -1309,11 +1243,11 @@ function textOf(message) {
  * "has some text" either (a short preamble like "I'll check that" sitting
  * next to a tool call in the SAME message is the model narrating what
  * it's about to do, not answering; Codex review, PR #26 round 12).
- * Exported (Codex review, PR #26 round 16) so index.ts can apply the
+ * Exported (Codex review, PR #26 round 16) so index.js can apply the
  * IDENTICAL bar when looking for a qualifying response OUTSIDE the
  * shadowed range this module itself scans: `lastAssistantSeq`
  * (`extractAnchors()`, below) only ever sees the shadowed prefix, never
- * the RETAINED tail `selectAdaptiveRange()` (range.ts) can leave a
+ * the RETAINED tail `selectAdaptiveRange()` (range.js) can leave a
  * question's own answer sitting in — its own cut point is chosen purely
  * by token budget, with no awareness of "does this split a question from
  * its own answer." The two checks must never drift apart, or the
@@ -1437,7 +1371,7 @@ export function extractAnchors(nodes, options) {
         // does not: an identical error/test/command message repeated verbatim
         // carries no new information the second time, but a `Q1: ...` question
         // GENUINELY repeated at a different point in the conversation is a
-        // second, separate obligation — reconcileOpenDeliverables() (summary.ts)
+        // second, separate obligation — reconcileOpenDeliverables() (summary.js)
         // already treats same-label occurrences as independently unresolved
         // when they collide; collapsing them here, before reconciliation ever
         // sees more than one, would silently defeat that (Codex review, PR #26
@@ -1494,7 +1428,7 @@ export function extractAnchors(nodes, options) {
         // Requires actual answer-bearing text, not merely `role === 'assistant'`
         // (Codex review, PR #26 round 11): an assistant turn that is ONLY a
         // tool call — `content: [{ type: 'tool-call', ... }]`, no text block at
-        // all, `session-factory.ts`'s own `appendUnansweredToolCall()` shape —
+        // all, `upstream session code`'s own `appendUnansweredToolCall()` shape —
         // is the model deciding to gather more information, not delivering an
         // answer. The original round-9 version treated any assistant-role
         // message as proof a response happened, which meant compaction running
@@ -1520,7 +1454,7 @@ export function extractAnchors(nodes, options) {
         // extra reopened reminder — a message that was only a preamble being
         // wrongly trusted costs the actual incident this check exists to catch.
         // `isDeliveredAnswer()` (above) is the exact same check, shared with
-        // index.ts's own retained-tail scan (Codex review, PR #26 round 16).
+        // index.js's own retained-tail scan (Codex review, PR #26 round 16).
         if (isDeliveredAnswer(message)) {
             lastAssistantSeq = lastAssistantSeq === undefined ? seq : Math.max(lastAssistantSeq, seq);
         }
@@ -1610,7 +1544,7 @@ export function extractAnchors(nodes, options) {
             // when a real human turn wrote it. Tool output claiming to be a
             // numbered question is exactly SEC-02's laundering shape, and this
             // anchor kind gets FORCED into the checkpoint's own `open` list
-            // (summary.ts's `reconcileOpenDeliverables()`) — an even more direct
+            // (summary.js's `reconcileOpenDeliverables()`) — an even more direct
             // route to steering the model's next actions than user_pins gets, so
             // the same gate matters at least as much here.
             //
@@ -1977,19 +1911,8 @@ export function renderOverflow(anchors) {
     return anchors.overflow.map(anchor => (`${LABELS[anchor.kind]}: ${anchor.kind === 'deliverables' ? escapeDeliverableNewlines(anchor.text) : singleLine(anchor.text)}`)).join('\n');
 }
 /**
- * Anchors NOT reproduced verbatim in externally-produced text (INT-18,
- * docs/05-sidecar-protocol.md §4: "`anchors[]` 中的每一條都必須逐字出現在回傳的
- * `summary` 中；harness 會驗（若缺，視為 summary 失敗）").
- *
- * The mirror image of the verbatim check `extractAnchors()` already runs
- * internally (above, "Every anchor must be a verbatim substring of its
- * source") — that one proves an anchor is a substring of the ORIGINAL
- * conversation it was extracted from; this one proves a REMOTE responder
- * reproduced what it was contractually required to. Takes a plain string,
- * not `ContentBlock[]`, keeping this module agnostic of content-block
- * shapes (see the module doc's own "Pure" contract) — callers coalesce
- * their own response text first.
- *
+ * Find required anchors missing from the externally produced summary.
+ * Callers coalesce response blocks before checking verbatim substrings.
  * @param anchors - the anchors the request required verbatim.
  * @param responseText - the sidecar's returned summary, already coalesced.
  * @returns the anchors NOT found; empty when the contract was honoured.
@@ -1997,4 +1920,3 @@ export function renderOverflow(anchors) {
 export function findMissingAnchors(anchors, responseText) {
     return anchors.filter(anchor => !responseText.includes(anchor.text));
 }
-//# sourceMappingURL=anchors.js.map

@@ -8,7 +8,7 @@
  * Pure: no Context, no I/O. `renderSummary` is byte-stable for a given document,
  * so a golden file is a meaningful test.
  *
- * @module @adaptive-compact/dsh-compaction-adaptive/summary
+ * @module adaptive-compact/summary
  */
 import { deliverableLabelsInSubject, normalizeDeliverableLabel, renderAnchors, unreconciledDeliverableNote, unresolvedDeliverables, } from "./anchors.js";
 /** Tag name is upstream's: its instruction tells the model to merge a prior one. */
@@ -16,7 +16,7 @@ export const SUMMARY_OPEN_TAG = '<compacted-summary>';
 export const SUMMARY_CLOSE_TAG = '</compacted-summary>';
 /**
  * JSON Schema for {@link SummaryDocument}, passed to a provider that supports
- * constraining generation to it (`summary.enforceSchema`, types.ts).
+ * constraining generation to it (`summary.enforceSchema`).
  *
  * Deliberately looser than the interface above: `parseSummaryDocument()`
  * already coerces a missing or wrong-typed field to a safe fallback rather
@@ -292,7 +292,7 @@ export const CHECKPOINT_PREAMBLE = 'This is an automatically generated checkpoin
 const ARTIFACT_URI_IN_TEXT = /artifact:\/\/sha256\/[0-9a-f]{64}/g;
 /**
  * What replaces a URI the reader cannot resolve. Exported so
- * sidecarSummarize() (index.ts) can recognise its own output as
+ * sidecarSummarize() (index.js) can recognise its own output as
  * substantively empty when a sidecar response cites only unresolvable
  * references — the same marker text, checked for the same reason
  * `scrubUnresolvableUris()` itself produces it here (Codex review, PR
@@ -348,7 +348,7 @@ export function scrubUnresolvableUris(body, resolve) {
  * phase's items, and the model executed `open`'s list to the letter.
  *
  * An entry counts as tracking a label only when that label is in the
- * entry's own SUBJECT (`deliverableLabelsInSubject()`, anchors.ts) — not
+ * entry's own SUBJECT (`deliverableLabelsInSubject()`, anchors.js) — not
  * merely present anywhere in the concatenated completed+open prose. Three
  * escalating failures Codex caught here across rounds: a plain substring
  * test ("Q1".includes) treated `Q1` as tracked the moment `open` contained
@@ -379,14 +379,14 @@ export function scrubUnresolvableUris(body, resolve) {
  * answered. Counted by ANCHOR OCCURRENCE, not distinct text — two
  * byte-identical `Q1: ...` anchors from two different turns are still two
  * separate obligations, matching the seq-aware extraction dedup in
- * anchors.ts's `push()`. Accepting any same-labelled match as sufficient
+ * anchors.js's `push()`. Accepting any same-labelled match as sufficient
  * could silently accept the wrong (or only one of two genuinely separate)
  * occurrence(s) as done while another stays unanswered — exactly the
  * failure this function exists to prevent, one level removed (Codex
  * review, PR #26, rounds 1 through 4).
  *
  * Label matching and collision handling themselves live in
- * `unresolvedDeliverables()`/`normalizeDeliverableLabel()` (anchors.ts,
+ * `unresolvedDeliverables()`/`normalizeDeliverableLabel()` (anchors.js,
  * Codex review, PR #26 round 8): the prose-mode path
  * (`unmentionedDeliverableNotes()`, same module) needed the identical
  * "which deliverables does this NOT account for" reduction, just fed a
@@ -548,7 +548,7 @@ export function compactionInstruction(schemaVersion) {
         '  still-true facts, drop stale ones, and merge newer information. Do not copy it forward verbatim.',
     ].join('\n');
 }
-//# sourceMappingURL=summary.js.map
+
 /** Budget-aware short instruction; full schema remains available to supporting adapters. */
 export function compactCompactionInstruction(schemaVersion, maxTokens) {
     return [

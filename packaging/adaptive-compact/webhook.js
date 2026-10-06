@@ -1,50 +1,17 @@
 /**
- * Webhook signature verification and replay rejection for the sidecar's
- * outbound event push (SEC-08, docs/05-sidecar-protocol.md §6).
- *
- * A standalone, exported pure-verification utility — NOT wired into
- * `AdaptiveCompactionEngine`. This repo is a library/plugin, not a server:
- * there is no "receive an inbound HTTP webhook" integration point to build
- * here. The real caller is an operator's own webhook-receiving service,
- * which imports this the same way it would import `redactText`/
- * `labelAllowed` from `@adaptive-compact/dsh-artifact-store` — general-
- * purpose exported utilities with no single internal call site either.
- *
- * @module @adaptive-compact/dsh-compaction-adaptive/webhook
+ * Webhook signature verification and replay rejection for sidecar event receivers.
+ * These exported utilities do not install an HTTP receiver in the compaction engine.
+ * @module adaptive-compact/webhook
  */
 import { createHmac, timingSafeEqual } from 'node:crypto';
-/** docs/05-sidecar-protocol.md §6's own "建議 300 秒" (recommended 300 seconds). */
+/**
+ * Default allowed clock skew for webhook freshness checks.
+ */
 const DEFAULT_MAX_SKEW_SECONDS = 300;
 /**
- * Verify one webhook delivery's HMAC signature and freshness.
- *
- * Two independent checks, because docs/05 §6 states two independent
- * requirements ("超過時間窗**或**重複 `event_id`" — replay rejection, the
- * second half, is `WebhookReplayGuard` below; signature/freshness alone
- * doesn't dedupe, and a replay guard alone doesn't verify authenticity).
- *
- * `headers.eventId` is itself part of the signed bytes (Codex review): an
- * earlier version signed only `timestamp + "." + body`, which let an
- * attacker replay a captured, still-fresh, validly-signed delivery under a
- * brand-new `X-Compact-Event-Id` — the signature check would still pass
- * (timestamp and body are unchanged), and `WebhookReplayGuard` would admit
- * the forged id as a genuinely new event, defeating replay rejection
- * entirely without ever breaking the signature. Binding the id into the
- * HMAC input means changing it invalidates the signature outright.
- *
- * The fields are LENGTH-PREFIXED, not simply `.`-joined (Codex review, PR
- * #18 round 4): plain concatenation is ambiguous when either field can
- * contain the separator itself — `{eventId:"evt", timestamp:"T.T"}` (a
- * non-canonical, dotted timestamp) and `{eventId:"evt.T", timestamp:"T"}`
- * both join to the identical `"evt.T.T"` prefix, so both sign identically
- * even though `WebhookReplayGuard` treats their `eventId`s as two
- * different events — a fresh delimiter-injection route to the exact
- * replay `event_id` binding was meant to close, reachable without ever
- * breaking the signature. A length prefix on each field makes its
- * boundary a number, not a character that could appear inside the field's
- * own content, so no two distinct (eventId, timestamp) pairs can ever
- * produce the same signed bytes.
- *
+ * Verify HMAC authenticity and timestamp freshness; WebhookReplayGuard separately
+ * rejects duplicate event IDs. Sign length-prefixed event ID, timestamp and exact
+ * body bytes so changing the ID or inserting delimiters invalidates the signature.
  * @param rawBody - the exact request body bytes the signature was computed
  *   over, as a string — NOT a re-serialized/re-parsed form, which could
  *   differ byte-for-byte from what the sender actually signed.
@@ -102,11 +69,8 @@ export function verifyWebhookSignature(rawBody, headers, options) {
     return { ok: true };
 }
 /**
- * Rejects a repeated `event_id` within the freshness window docs/05 §6
- * requires consumers to enforce. In-memory, per-instance — the same
- * durability tier as `ContextRetrieval`'s own `taintedSessions`/
- * `scannedThrough` (rebuilt from nothing on restart; a webhook receiver's
- * own persistence, if any, is the operator's concern, not this class's).
+ * Reject duplicate event IDs within the freshness window.
+ * State is per-instance and in memory; receivers provide any required persistence.
  */
 export class WebhookReplayGuard {
     windowSeconds;
@@ -132,4 +96,3 @@ export class WebhookReplayGuard {
         return true;
     }
 }
-//# sourceMappingURL=webhook.js.map

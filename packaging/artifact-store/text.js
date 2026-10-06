@@ -75,4 +75,3 @@ export function lineAt(index, offset) {
     }
     return lo + 1;
 }
-//# sourceMappingURL=text.js.map

@@ -53,26 +53,10 @@ export class ArtifactStore extends Service {
     blobs;
     refs;
     /**
-     * Counters for telemetry; never contain artifact content.
-     *
-     * `deduplicated` undercounts under real concurrent PROCESSES (not threads)
-     * writing the same digest at once: `BlobStore.putSync`'s dedup check is
-     * read-then-act (info() + has(), then write) with no cross-process lock, so
-     * several racers can all observe "not present yet" before any of them
-     * finishes, and each correctly reports itself a first writer at the moment
-     * it checked. Measured directly (ST-04, which holds all 12 processes on a
-     * stdin barrier and releases them together): ALL TWELVE report
-     * `deduplicated: false`, on every run — the window is not narrow, it is
-     * whatever the slowest racer's write takes. The BLOB itself is not at risk:
-     * each write goes to a temp file named with a per-call `randomUUID()`, then
-     * is published by an atomic rename, so exactly one correct file survives no
-     * matter how the writers' identities compare. ST-04 verifies this directly
-     * for separate PROCESSES on every run; worker threads and separate PID
-     * namespaces (containers sharing a volume) are closed by the same
-     * construction but have no test of their own. Only this counter's precision
-     * is affected — treat
-     * `deduplicated`/`writes` as a lower/upper bound on true storage savings
-     * under concurrent load, not an exact count. See docs/11-review-log.md §21.
+     * Telemetry counters never include artifact content.
+     * Concurrent processes can undercount deduplication because the existence check
+     * and write are not locked together. Atomic publication protects blob contents;
+     * deduplicated/writes only bound storage savings under concurrent load.
      */
     stats = {
         writes: 0, deduplicated: 0, reads: 0, missing: 0, forbidden: 0,
@@ -84,21 +68,8 @@ export class ArtifactStore extends Service {
         mkdirSync(join(this.config.root, 'refs', 'index'), { recursive: true });
         this.blobs = new BlobStore(this.config.root, this.config.durability);
         this.refs = new ReferenceStore(this.config.root);
-        // Reclaim temps orphaned by a previous run that was killed mid-write.
-        //
-        // Deliberately at CONSTRUCTION rather than only in `sweep()`. Retention
-        // sweeping is an operator-scheduled job (docs/06-telemetry-ops.md lists it
-        // on the deployment checklist) and `sweep()` has no caller inside this
-        // repo at all — so a deployment that never wires up that schedule would
-        // accumulate orphaned temps forever. That is tolerable for retention,
-        // where the operator opted into the tradeoff, but not here: an orphaned
-        // temp has no reference pointing at it and no digest-named file, so it is
-        // invisible to every other reclamation path. The one moment a restarted
-        // container is guaranteed to reach is the store being constructed.
-        //
-        // Failure is logged, never thrown: a store that cannot start because a
-        // stale temp could not be unlinked would be a far worse outcome than the
-        // leak it is trying to prevent.
+        // Reclaim orphaned temporary files at startup, independently of scheduled sweeps.
+        // Cleanup failures are logged without preventing the store from starting.
         this.reclaimTemps(ctx);
         // A startup sweep alone is not enough. Two windows stay open without a
         // recurring pass:
@@ -552,4 +523,3 @@ export class ArtifactStore extends Service {
     }
 }
 export default ArtifactStore;
-//# sourceMappingURL=index.js.map

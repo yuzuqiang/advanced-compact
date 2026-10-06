@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path'
 
 const digest = bytes => createHash('sha256').update(bytes).digest('hex')
 
-/** Verify an imported release, its tarball, and the bundled runtime dependency. */
+/** Verify the cleaned release, its documented source changes, and bundled dependency. */
 export function verifyImportedRelease(root) {
   const bundle = join(root, 'packaging', 'adaptive-compact')
   const integrity = JSON.parse(readFileSync(join(bundle, 'release-integrity.json'), 'utf8'))
@@ -30,7 +30,8 @@ export function verifyImportedRelease(root) {
   const sourceManifest = JSON.parse(execFileSync('tar', ['-xzOf', sourceTarball, 'package/package.json']))
   assert.equal(sourceManifest.version, integrity.sourceVersion, 'source candidate version')
   sourceManifest.version = manifest.version
-  assert.deepEqual(sourceManifest, manifest, 'only source package version normalized')
+  delete sourceManifest.dshLocalPackaging
+  assert.deepEqual(sourceManifest, manifest, 'source operational package fields preserved')
   const dependencyPrefix = 'node_modules/@adaptive-compact/dsh-artifact-store/'
   const sourceFiles = expected.filter(name => !name.startsWith(dependencyPrefix))
   const actualFiles = readdirSync(bundle).filter(name => /\.(js|yml)$/.test(name) || name === 'package.json').sort()
@@ -39,6 +40,7 @@ export function verifyImportedRelease(root) {
     .map(name => name.slice(dependencyPrefix.length)).sort()
   assert.deepEqual(readdirSync(join(root, 'packaging', 'artifact-store')).filter(name => /\.(js|json)$/.test(name)).sort(), dependencyFiles, 'complete dependency inventory')
 
+  const changed = []
   for (const [name, hash] of Object.entries(integrity.files)) {
     const loose = name.startsWith(dependencyPrefix)
       ? join(root, 'packaging', 'artifact-store', name.slice(dependencyPrefix.length))
@@ -46,10 +48,24 @@ export function verifyImportedRelease(root) {
     assert.equal(digest(readFileSync(loose)), hash, `loose file: ${name}`)
     const packed = execFileSync('tar', ['-xzOf', tarball, `package/${name}`])
     assert.equal(digest(packed), hash, `packed file: ${name}`)
-    if (name !== 'package.json') {
-      assert.equal(digest(execFileSync('tar', ['-xzOf', sourceTarball, `package/${name}`])), hash, `source candidate: ${name}`)
+    const source = execFileSync('tar', ['-xzOf', sourceTarball, `package/${name}`])
+    if (digest(source) !== hash) {
+      changed.push(name)
+      const change = integrity.sourceChanges[name]
+      assert(change, `undocumented source change: ${name}`)
+      assert.equal(digest(source), change.sourceSha256, `source candidate: ${name}`)
+      const kind = name.endsWith('package.json') ? 'package-metadata'
+        : ['index.js', 'config.js'].includes(name) ? 'comments-and-auth-error-text' : 'comments'
+      assert.equal(change.kind, kind, `source change category: ${name}`)
     }
+    if (name === `${dependencyPrefix}package.json`) {
+      const sourceDependency = JSON.parse(source)
+      delete sourceDependency.comment
+      assert.deepEqual(sourceDependency, JSON.parse(packed), 'dependency operational package fields preserved')
+    }
+    assert(!/\bdocs\/|sourceMappingURL=/.test(packed.toString()), `obsolete reference: ${name}`)
     if (name.endsWith('.js')) execFileSync(process.execPath, ['--check', loose], { stdio: 'pipe' })
   }
-  console.log(`✓ adaptive-compact ${manifest.version}: ${expected.length} payload files, bundled dependency, syntax and release hashes verified`)
+  assert.deepEqual(Object.keys(integrity.sourceChanges).sort(), changed.sort(), 'complete source change inventory')
+  console.log(`✓ adaptive-compact ${manifest.version}: ${expected.length} payload files, ${changed.length} documented source changes, syntax and release hashes verified`)
 }

@@ -33,4 +33,3 @@ export class ArtifactError extends Error {
         return uri === undefined ? OUTWARD[this.code] : `${OUTWARD[this.code]} (${uri})`;
     }
 }
-//# sourceMappingURL=errors.js.map

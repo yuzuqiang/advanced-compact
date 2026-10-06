@@ -1,21 +1,9 @@
 /**
- * RFC 8785 JSON Canonicalization (JCS), scoped to what `summary_sha256`
- * needs (docs/05-sidecar-protocol.md §3.1):
- *
- *   summary_sha256 = hex( SHA-256( UTF-8( JCS( summary ) ) ) )
- *
- * Not a general RFC 8785 implementation — the wire `summary` payload
- * (`WireContentBlock[]`) is a shallow, known, non-exotic shape with no
- * numeric fields at all, so JCS's number-canonicalization rule (matching
- * ECMAScript's own `Number::toString`) never applies to this payload.
- * Verified directly (not just reasoned about) that plain `JSON.stringify`
- * per primitive is already JCS-compliant here: it does not escape
- * U+2028/U+2029 (RFC 8785's minimal-escaping rule), and default `.sort()`
- * on JS strings already compares by UTF-16 code unit, including surrogate
- * pairs — exactly RFC 8785's required key order. The only real work left is
- * recursively re-serializing with object keys sorted.
- *
- * @module @adaptive-compact/dsh-compaction-adaptive/jcs
+ * Canonicalize the sidecar summary array for its SHA-256.
+ * The supported wire blocks contain no numeric fields; this is not a general
+ * RFC 8785 number-canonicalization implementation. Object keys use UTF-16 order
+ * and primitives use JSON.stringify escaping.
+ * @module adaptive-compact/jcs
  */
 import { createHash } from 'node:crypto';
 /**
@@ -42,11 +30,7 @@ export function canonicalizeJson(value) {
     return `{${entries.join(',')}}`;
 }
 /**
- * `summary_sha256` per docs/05-sidecar-protocol.md §3.1: hashed over the
- * canonical bytes of `summary` alone, NOT the whole response body (which
- * carries per-request fields like `request_id` that would never let a
- * response's hash match itself).
- *
+ * Hash canonical UTF-8 bytes of summary alone, excluding per-request response fields.
  * @param summary - the wire `summary` array, no outer wrapper.
  * @returns lowercase hex SHA-256.
  */
@@ -54,4 +38,3 @@ export function summarySha256(summary) {
     const canonical = canonicalizeJson(summary);
     return createHash('sha256').update(Buffer.from(canonical, 'utf8')).digest('hex');
 }
-//# sourceMappingURL=jcs.js.map

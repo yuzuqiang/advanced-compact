@@ -100,4 +100,3 @@ export function resolveConfig(config = {}) {
         maxToolReadBytes: positiveInt('maxToolReadBytes', config.maxToolReadBytes ?? DEFAULTS.maxToolReadBytes),
     };
 }
-//# sourceMappingURL=config.js.map

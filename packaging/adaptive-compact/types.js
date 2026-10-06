@@ -1,7 +1,6 @@
 /**
  * Configuration and result vocabulary for adaptive compaction.
  *
- * @module @adaptive-compact/dsh-compaction-adaptive/types
+ * @module adaptive-compact/types
  */
 export {};
-//# sourceMappingURL=types.js.map

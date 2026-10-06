@@ -40,4 +40,3 @@ export function chunkText(uri, text, opts) {
     }
     return chunks;
 }
-//# sourceMappingURL=chunk.js.map

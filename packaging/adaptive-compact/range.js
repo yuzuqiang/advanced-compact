@@ -6,7 +6,7 @@
  * at most the system prompt — warm. Compacting a middle span would invalidate
  * more for the same reduction.
  *
- * @module @adaptive-compact/dsh-compaction-adaptive/range
+ * @module adaptive-compact/range
  */
 import { toolPairingBalancedBefore } from '@deepseek-ai/dsh-compaction';
 import { isCompactCheckpointSource } from '@deepseek-ai/dsh-compaction/checkpoint';
@@ -37,10 +37,7 @@ export function selectAdaptiveRange(session, measurement, spec) {
         // Selecting from a stale measurement would shadow the wrong nodes.
         throw new Error('compaction: token-meter surface does not match the current session surface');
     }
-    // DSH 0.1.5 keeps the system prompt as a `system/message` at surface node 0
-    // and rejects any replacement covering it ("surface replace: node 0 holds the
-    // system prompt"), so the range starts after it. 0.1.2 had no system node,
-    // which is also why its event-type union cannot name it here.
+    // Keep a leading system prompt outside the replacement range.
     const headType = sessionEventAt(session, nodes[0])?.type;
     const firstIdx = headType === 'system/message' ? 1 : 0;
     // 1. Walk back from the tail until the retain budget is met.
@@ -123,4 +120,3 @@ function reusableTailTokens(priced, fromIdx) {
     }
     return { total, safe: safe && Number.isSafeInteger(total) };
 }
-//# sourceMappingURL=range.js.map

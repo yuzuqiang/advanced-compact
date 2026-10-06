@@ -73,6 +73,8 @@ test('low-savings key ignores valid native tool progress, preserves human/answer
 });
 test('real native transaction folds tools, retains valid quote, leaves log and balanced tail intact',async()=>{
  const ctx=new Context();new SessionProjectionRegistry(ctx);new SessionStore(ctx);new LlmRuntime(ctx);new TokenMeter(ctx);
+ assert.equal(process.env.ADAPTIVE_COMPACT_TEST_UNSET_TOKEN,undefined);
+ assert.throws(()=>new AdaptiveCompactionEngine(ctx,{sidecar:{mode:'rest',endpoint:'https://example.invalid',authTokenEnv:'ADAPTIVE_COMPACT_TEST_UNSET_TOKEN'}}),/REST sidecar endpoints require bearer authentication/);
  class Adapter extends LlmAdapter {calls=[];async resolveModel(provider,id){return {provider,id,name:id,context:{contextWindow:32768},defaultMaxTokens:1024};}async *stream(o){this.calls.push(o);yield {type:'text-delta',index:0,text:JSON.stringify(doc)};yield {type:'finish',reason:{kind:'stop'}};}}
  const adapter=new Adapter();ctx.llm.registerAdapter(['offline'],adapter);
  const engine=new AdaptiveCompactionEngine(ctx,{profile:'custom',retainTokens:1024,maxTokens:768,compactionRetries:0,summary:{foldToolRepeats:true,verbatimFileArtifacts:true},security:{localProviders:['offline']},evidence:{enabled:false}}),s=Session.create('native-transaction');

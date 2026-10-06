@@ -12,4 +12,3 @@
  * @module @adaptive-compact/dsh-artifact-store/types
  */
 export const SECURITY_LABEL_ORDER = ['public', 'internal', 'confidential', 'secret'];
-//# sourceMappingURL=types.js.map

@@ -169,4 +169,3 @@ export function registerArtifactTools(ctx, store, resolvePrincipal = () => store
     ctx.effect(() => dispose);
     return dispose;
 }
-//# sourceMappingURL=tools.js.map

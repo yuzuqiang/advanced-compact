@@ -1,28 +1,12 @@
 /**
- * Domain↔wire mapping for the sidecar REST transport
- * (docs/05-sidecar-protocol.md §4 `CompactRequest`/`CompactResponse`).
- *
- * The wire `ContentBlock` (`text | artifact_ref | code | image_ref`) is a
- * DIFFERENT type than `@deepseek-ai/dsh-llm`'s in-process `ContentBlock`
- * (`text | reasoning | image | tool-call | tool-result`) — this module is
- * the only place that boundary is crossed, in either direction.
- *
- * @module @adaptive-compact/dsh-compaction-adaptive/sidecar-serialize
+ * Map domain messages to the REST sidecar protocol and back.
+ * Wire text, artifact_ref, code and image_ref blocks differ from domain blocks.
+ * @module adaptive-compact/sidecar-serialize
  */
 import { scrubUnresolvableUris } from "./summary.js";
 /**
- * One shadowed message as a wire `SurfaceNode`.
- *
- * One deliberate deviation from a naive role-passthrough: a `role:'user'`
- * message whose `source.kind === 'tool'` maps to wire `role:'tool'`, not
- * `'user'` — preserving the "untrusted tool output vs. human intent"
- * distinction this codebase's own anchor extraction already relies on
- * internally (`anchors.ts`'s `isHumanTurn()`, added for SEC-02). Losing
- * that distinction across the wire boundary would be a real regression
- * against docs/07-security.md §2.1's "摘要器不是 sanitizer" principle,
- * applied one hop further out: the sidecar's own summarizer needs the same
- * "this is untrusted tool output, not user intent" signal this harness's
- * own local model already gets.
+ * Map a user-role message with tool provenance to wire role tool.
+ * The sidecar must distinguish untrusted tool output from human instructions.
  */
 export function toSurfaceNode(node) {
     const { seq, message } = node;
@@ -99,7 +83,7 @@ export function toWireContentBlocks(blocks) {
  * Wire `text`/`code` become a domain `TextBlock`. Wire `artifact_ref`/
  * `image_ref` become a `TextBlock` whose text is the literal
  * `artifact://sha256/<digest>` URI — this package's own established
- * convention for citing an artifact inline (the same shape `anchors.ts`'s
+ * convention for citing an artifact inline (the same shape `anchors.js`'s
  * `ARTIFACT_URI` regex and `buildAnchors()`'s own `resolveArtifact`
  * callback already scan for), rather than inventing a new block-level
  * artifact representation the rest of this codebase has no notion of. A
@@ -127,4 +111,3 @@ export function fromWireContentBlocks(blocks, resolveArtifact) {
     }
     return out;
 }
-//# sourceMappingURL=sidecar-serialize.js.map

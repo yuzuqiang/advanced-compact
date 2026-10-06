@@ -1,27 +1,13 @@
 /**
- * REST transport for the sidecar bridge (docs/05-sidecar-protocol.md §4).
- *
- * The only module in this package that knows about `fetch`, HTTP status
- * codes, or timeouts — modeled on `packages/llm-llamacpp/src/index.ts`'s
- * own outbound-fetch pattern (base URL normalized once, plain-object body,
- * conditional-spread headers, try/catch around `fetch()` → a classified
- * error), extended with real timeout handling that adapter doesn't need
- * (it only forwards a caller-supplied `AbortSignal`; `sidecar.timeoutMs`
- * is a validated-but-previously-dead config field this client finally
- * consumes). `AbortSignal.any` is unavailable — this repo's `engines`
- * floor (`>=18.15.0 <19.0.0 || >=19.6.0`) predates Node 20.3.0 — so the
- * caller signal and an internal timeout are combined by hand.
- *
- * @module @adaptive-compact/dsh-compaction-adaptive/sidecar-client
+ * REST sidecar transport with classified failures and request timeouts.
+ * The caller signal and internal timeout share one abort controller.
+ * @module adaptive-compact/sidecar-client
  */
 import { HarnessError } from '@deepseek-ai/dsh-llm';
 import { redactText } from '@adaptive-compact/dsh-artifact-store/redact';
 /**
- * The surface generation changed between request and response — a 409, or
- * a structurally-successful response whose own `source_generation` doesn't
- * match. Hard-fail: never respects `failOpen` (see `index.ts`'s
- * `sidecarSummarize()` for why — a stale snapshot cannot produce a
- * committable result regardless of which provider computed it).
+ * A stale source generation, whether returned with HTTP 409 or a successful
+ * response, cannot produce a committable summary and never permits failOpen.
  */
 export class SidecarChangedError extends HarnessError {
     constructor(message) {
@@ -110,12 +96,12 @@ function validateCompactResponse(value) {
     // `sha256` must be a real 64-hex-digest SHAPE, not merely non-empty
     // (Codex review, PR #18 round 5, fresh evidence after the round-4
     // blank-text fix): a malformed value like "missing" doesn't even match
-    // ARTIFACT_URI_IN_TEXT's own 64-hex-character regex (summary.ts),
+    // ARTIFACT_URI_IN_TEXT's own 64-hex-character regex (summary.js),
     // so it synthesizes into inert, unmatched literal text — not a real
-    // reference — when index.ts's own fromWireContentBlocks() runs. THIS
+    // reference — when index.js's own fromWireContentBlocks() runs. THIS
     // check is deliberately only shape validation, not resolvability — this
     // module has no artifact-store access to ask "does this digest actually
-    // exist"; index.ts's own sidecarSummarize() runs a SECOND, later check
+    // exist"; index.js's own sidecarSummarize() runs a SECOND, later check
     // against the real resolver, after scrubUnresolvableUris() has had a
     // chance to replace a well-formed-but-nonexistent reference with its own
     // fixed marker text.
@@ -248,4 +234,3 @@ export class SidecarClient {
         }
     }
 }
-//# sourceMappingURL=sidecar-client.js.map

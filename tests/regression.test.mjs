@@ -44,6 +44,7 @@ test('unconfigured and zero cap produce identical budgets across model windows',
 test('configuration rejects invalid input caps and non-boolean artifact guard', () => {
     for (const value of [-1, .5, Infinity, '49152']) assert.throws(() => resolveAdaptiveConfig({budget:{maxInputTokens:value}}));
     assert.throws(() => resolveAdaptiveConfig({summary:{verbatimFileArtifacts:'true'}}));
+    assert.throws(() => resolveAdaptiveConfig({sidecar:{mode:'rest',endpoint:'https://example.invalid'}}), /REST sidecar endpoints require bearer authentication/);
     assert.throws(() => resolveSpec(resolveAdaptiveConfig({...base,budget:{maxInputTokens:8192}}),131072,16384,16384), /retainTokens/);
 });
 test('original source description corruption reproduces and is omitted', () => {

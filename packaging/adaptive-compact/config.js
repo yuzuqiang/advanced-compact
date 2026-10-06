@@ -4,7 +4,7 @@
  * Every check here runs at plugin load. A budget that only proves wrong under
  * pressure is a production incident scheduled for the worst possible moment.
  *
- * @module @adaptive-compact/dsh-compaction-adaptive/config
+ * @module adaptive-compact/config
  */
 const KEYS = new Set([
     'profile', 'thresholdRatio', 'retainRatio', 'retainTokens',
@@ -29,7 +29,7 @@ const ANCHOR_KINDS = ['errors', 'tests', 'files', 'artifacts', 'commands', 'user
  * explicit, human-stated obligations, not incidental evidence gathered along
  * the way. Losing an errors/tests/files anchor degrades context quality;
  * losing a deliverable can silently drop a required part of the answer
- * (`summary.ts`'s `reconcileOpenDeliverables()` re-adds it to `open` even
+ * (`summary.js`'s `reconcileOpenDeliverables()` re-adds it to `open` even
  * when evicted here, but only the verbatim question text in the rendered
  * Anchors block — the version worth actually re-reading, not just a bare
  * label reminder — survives if it stays kept).
@@ -59,15 +59,8 @@ const BASE = {
     sidecar: { mode: 'native', endpoint: '', timeoutMs: 20_000, failOpen: true, tenantId: 'default' },
     evidence: { enabled: true, budgetRatio: 0.2, topK: 32, finalK: 12, stabilityWindow: 3 },
     ownership: { pressure: 'harness', overflowFallback: 'summarize' },
-    // Fail closed (Codex review, round 8): a provider's NAME never proves its
-    // endpoint is actually local — packages/llm-llamacpp's own adapter takes
-    // an arbitrary, operator-configured baseUrl, so a route named 'llamacpp'
-    // pointed at a cloud-hosted endpoint would have silently qualified under
-    // a non-empty default. Empty here means "every provider counts as
-    // remote" unless a deployment explicitly sets its own
-    // config.security.localProviders — no PROFILE grants an exception to
-    // this (Codex review, round 9): a profile selects tuning numbers only,
-    // never network trust. See 'local-4090' below for the fuller reasoning.
+    // Provider names do not establish endpoint locality.
+    // Only explicitly configured localProviders may receive secret content.
     security: { localProviders: [] },
 };
 export const PROFILES = {
@@ -143,17 +136,8 @@ function tokensOrRatio(name, value) {
 const RENAMED = {
     'hysteresis.cooldownGenerations': {
         to: 'hysteresis.cooldownLogEvents',
-        // NOT value-preserving. The old setting counted surface.replaceGeneration
-        // (one tick per successful COMPACTION); the new one counts ordinary log
-        // events (one tick per APPEND) — different units, chosen specifically
-        // because counting generations deadlocked the whole cooldown clock (see
-        // docs/11-review-log.md R22/C5). Both of this project's own example
-        // configs carried `cooldownGenerations: 2`; the CURRENT profile defaults
-        // for the same setting are 24 (local-4090) and 32 (cloud-l). Telling an
-        // operator to "update the key" and stopping there — what an earlier
-        // version of this file did — reads as a mechanical, safe rename. Copying
-        // 2 log events instead of 2 generations collapses the cooldown almost to
-        // nothing: far more frequent compaction, cost, and prefix-cache churn.
+        // cooldownLogEvents counts appended log events, not successful surface replacements.
+        // The old cooldownGenerations value is not interchangeable with this setting.
         valuePreserving: false,
         units: { old: 'one tick per successful compaction', new: 'one tick per appended log event' },
     },
@@ -278,21 +262,11 @@ export function resolveAdaptiveConfig(config = {}) {
         throw new Error(`AdaptiveCompactionConfig: sidecar.endpoint is required when sidecar.mode is "${sidecarMode}"`);
     }
     const sidecarAuthTokenEnv = config.sidecar?.authTokenEnv ?? preset.sidecar.authTokenEnv;
-    // docs/05-sidecar-protocol.md §3.2/§4 mark bearer auth mandatory on every
-    // endpoint — an omitted authTokenEnv is not "auth not needed", it is
-    // every request going out unauthenticated, which a conforming, schema-
-    // validating sidecar rejects on every single pass (Codex review): with
-    // failOpen this silently invokes the native summarizer instead every
-    // time, and without it compaction fails every time — either way, a
-    // REST sidecar an operator believes is running never actually is. Fail
-    // at load, the same as a missing endpoint, rather than discover this
-    // only once real traffic starts arriving unauthenticated. Only the
-    // env-var NAME is checked here (config-shape validation); the actual
-    // env var VALUE is checked in the constructor, where process.env is
-    // already read.
+    // REST sidecars require bearer authentication. Validate the environment-variable
+    // name here; the constructor also rejects an unset or empty token.
     if (sidecarMode === 'rest' && (sidecarAuthTokenEnv === undefined || sidecarAuthTokenEnv.length === 0)) {
         throw new Error('AdaptiveCompactionConfig: sidecar.authTokenEnv is required when sidecar.mode is "rest" — '
-            + 'docs/05-sidecar-protocol.md marks bearer auth mandatory on every endpoint');
+            + 'REST sidecar endpoints require bearer authentication');
     }
     const sidecar = {
         mode: sidecarMode,
@@ -394,18 +368,9 @@ function scaleOutputReserve(value, contextWindow) {
     return value < 1 ? Math.floor(contextWindow * value) : value;
 }
 /**
- * Derive `outputReserve` from model capability when it isn't configured
- * explicitly: `min(maxOutputTokens, max(0.05 * window, maxTokens * 2))`
- * (docs/03-packages.md's `budget.outputReserve` spec).
- *
- * No upstream type actually exposes a `maxOutputTokens` ceiling (verified:
- * no such field exists anywhere in `@deepseek-ai/dsh-llm`'s types) — the
- * closest real, populated signal is `LlmResolvedModelInfo.defaultMaxTokens`,
- * the adapter's own configured default for a request's `max_tokens`. It's an
- * imperfect stand-in, not a true ceiling, but it's what's actually available.
- * When it's unknown the `min(...)` clamp is skipped entirely rather than
- * treated as a ceiling of zero, so an uncharacterized model still gets the
- * full capability-independent floor.
+ * Derive outputReserve as min(defaultMaxTokens, max(0.05 * window, maxTokens * 2)).
+ * The model default is a proxy, not a guaranteed output ceiling.
+ * If it is unknown, keep the capability-independent floor without that clamp.
  */
 function deriveOutputReserve(contextWindow, maxTokens, defaultMaxTokens) {
     const floor = Math.max(contextWindow * 0.05, maxTokens * 2);
@@ -461,4 +426,3 @@ export function resolveSpec(config, contextWindow, defaultMaxTokens, requestedMa
         cooldownTurns: config.hysteresis.cooldownTurns,
     };
 }
-//# sourceMappingURL=config.js.map

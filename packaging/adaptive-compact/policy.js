@@ -5,7 +5,7 @@
  * easiest to get wrong and hardest to observe in production, so they are kept
  * out of the engine and unit-tested directly.
  *
- * @module @adaptive-compact/dsh-compaction-adaptive/policy
+ * @module adaptive-compact/policy
  */
 /**
  * Whether pressure warrants compaction.
@@ -65,12 +65,8 @@ export function markOf(session, measurement, turn) {
     return { logRevision: measurement.logRevision, turn: turn ?? currentTurn(session) };
 }
 /**
- * Read one log event by seq on either upstream Session API.
- *
- * DSH 0.1.5 removed the `events` array getter in favour of indexed
- * `eventAt(seq)` (upstream 5660f44d29); the pinned 0.1.2 dev dependency has
- * only `events`. Reading `session.events[seq]` on 0.1.5 throws
- * "Cannot read properties of undefined", which failed every compaction.
+ * Read a log event through indexed eventAt when available, otherwise through
+ * the legacy events array.
  * @param session - the session whose log is read.
  * @param seq - the event sequence number.
  * @returns the event, or undefined past the log tail.
@@ -115,4 +111,3 @@ export function hasOpenTurn(session) {
     }
     return false;
 }
-//# sourceMappingURL=policy.js.map

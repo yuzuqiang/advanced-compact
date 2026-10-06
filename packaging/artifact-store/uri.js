@@ -57,4 +57,3 @@ export function findArtifactUris(text) {
     }
     return out;
 }
-//# sourceMappingURL=uri.js.map

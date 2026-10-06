@@ -30,11 +30,5 @@
   },
   "bundleDependencies": [
     "@adaptive-compact/dsh-artifact-store"
-  ],
-  "dshLocalPackaging": {
-    "source": "user-provided adaptive-compact 0.1.2 with local improvements",
-    "runtime": "Offline verified against local DSH 0.1.5-rc.2; native user/tool-result and synthetic legacy role=tool protocols",
-    "artifactStore": "code dependency only; service not activated",
-    "activeScope": "Opt-in prompt-only exact repeated tool-payload references; cost candidate bundle enables dedupeToolPayloads, with no deployment or new API run; cancellation checked at transaction frame pricing and stability boundaries"
-  }
+  ]
 }

@@ -16,7 +16,7 @@
  * Load INSTEAD OF `@deepseek-ai/dsh-compaction-basic`: both claim
  * `ctx.compaction`, and a context holds one.
  *
- * @module @adaptive-compact/dsh-compaction-adaptive
+ * @module adaptive-compact
  */
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { Context } from '@deepseek-ai/cordis';
@@ -90,12 +90,8 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
         /** Passes that opened a bracket and committed nothing. See `passFailed`. */
         passFailures: 0,
         /**
-         * Summarizations downgraded to the zero-model-call anchors-only path
-         * because the context being compacted carried secret-labelled content
-         * and the resolved summarization target was not in
-         * `security.localProviders` (SEC-06). Paired with a `ctx.logger.warn()`
-         * call whose message is grep-able as `context.summary_downgraded_secret`
-         * — see docs/07-security.md §3/§6.
+         * Summaries downgraded to anchors-only because secret content was destined
+         * for a provider outside security.localProviders. Logs context.summary_downgraded_secret.
          */
         secretDowngrades: 0,
         /** Every attempted sidecar `/v1/compact` call, successful or not. */
@@ -171,8 +167,8 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
         // discovered at runtime instead of at load (Codex review).
         if (adaptive.sidecar.mode === 'rest' && (authToken === undefined || authToken.length === 0)) {
             throw new Error(`AdaptiveCompactionConfig: sidecar.authTokenEnv names "${adaptive.sidecar.authTokenEnv}", `
-                + `but process.env.${adaptive.sidecar.authTokenEnv} is not set — docs/05-sidecar-protocol.md `
-                + 'marks bearer auth mandatory on every endpoint');
+                + `but process.env.${adaptive.sidecar.authTokenEnv} is not set — `
+                + 'REST sidecar endpoints require bearer authentication');
         }
         // Hand the parent only the keys it owns, already expanded from the profile,
         // so its own validation sees the same numbers this engine will use.
@@ -232,12 +228,8 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
         if (target === undefined)
             return null;
         this.stats.considered += 1;
-        // Wire vocabulary (docs/05-sidecar-protocol.md §4) uses an underscore;
-        // upstream's own CompactionTrigger uses a hyphen — no 'manual' value
-        // exists there at all, since compactNow() below never goes through
-        // compactIfNeeded() and stashes its own value directly. Setting
-        // pendingTrigger is deferred to immediately before each compactRegion()
-        // call below (not here) — see the comment there for why.
+        // Wire triggers use underscores; upstream CompactionTrigger uses hyphens.
+        // Set pendingTrigger immediately before each compactRegion call.
         const sidecarTrigger = trigger === 'context-overflow' ? 'context_overflow' : 'pressure';
         // Overflow takes the short path: the provider has already established that
         // the request does not fit, so neither the threshold nor the cooldown has
@@ -533,13 +525,7 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
      * @returns the summary blocks plus the exact call envelope.
      */
     /**
-     * ⚠️ This override is structurally narrower than the inherited signature: it
-     * takes `AgentLike` rather than upstream's full `Agent`, and returns the
-     * `llmStreamCall`-marked arm of upstream's result union. Both are sound at
-     * runtime — the body uses only what `AgentLike` declares, and always sets the
-     * marker — but neither is expressible through the inherited types under
-     * `exactOptionalPropertyTypes`. `tsc` reports one variance error here by
-     * design; see docs/02 for why widening the parent's types is not an option.
+     * Summarize the selected prefix and propagate cancellation.
      */
     async summarize(input, agent, signal) {
         signal?.throwIfAborted();
@@ -597,31 +583,9 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
             const result = this.anchorsOnlyResult(agent.session, this.buildAnchors(agent.session, input, 'secret'));
             return { ...result, summary: this.withSecretProvenance(result.summary, hasSecret) };
         }
-        // Sidecar dispatch. Gated on `!hasSecret` directly, NOT on `downgrade`
-        // being undefined: `secretDowngradeReason()` only asks whether a LOCAL
-        // LLM provider is trusted for secret content (`security.localProviders`)
-        // — that says nothing about the sidecar, a separate external
-        // destination docs/05-sidecar-protocol.md §8 unconditionally forbids
-        // secret content from reaching ("MUST NOT", no local-provider
-        // carve-out). An operator trusting `security.localProviders: ['llamacpp']`
-        // while also running `sidecar.mode: 'rest'` must not have that local
-        // trust silently extended to the sidecar too. When `hasSecret` is true
-        // and a local provider IS trusted, execution falls through to the
-        // structured/prose local path below, completely unaffected by sidecar
-        // config — exactly as before this feature existed.
-        //
-        // KNOWN SCOPE BOUNDARY (Codex review, PR #26 round 2): the sidecar
-        // branch below returns before `reconcileOpenDeliverables()` (summary.ts)
-        // ever runs — `sidecarSummarize()`'s own anchors check
-        // (`findMissingAnchors`, further down this file) only proves a
-        // deliverable's verbatim TEXT appears somewhere in the sidecar's
-        // response, not that the response's own task-tracking (whatever shape a
-        // given sidecar implementation uses) still marks it unanswered. Closing
-        // that gap for real needs `task_state`-equivalent structure added to
-        // `CompactResponseBody` (sidecar-serialize.ts) — a wire-protocol change
-        // requiring every sidecar implementation to update, not a client-side
-        // fix — and is out of scope here. Documented, not silently assumed
-        // covered: see docs/05-sidecar-protocol.md §8.
+        // Secret content never reaches a sidecar, even if a local LLM provider is trusted.
+        // The sidecar verifies verbatim anchor presence but does not reconcile open task
+        // state; that requires a task-state extension to its response protocol.
         if (this.adaptive.sidecar.mode !== 'native' && !hasSecret) {
             return this.sidecarSummarize(input, agent, signal);
         }
@@ -733,21 +697,8 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
         return this.result(raw, this.withSecretProvenance([{ type: 'text', text: this.redact(text) }], hasSecret));
     }
     /**
-     * Delegate to upstream's own `super.summarize()` — prose mode's normal
-     * path, and the sidecar's own failOpen recovery target
-     * (docs/03-packages.md §4.7: "退回 `super.summarize()`", not this
-     * engine's local structured path — falling open to structured mode would
-     * impose a second, possibly-unconfigured local-provider requirement on a
-     * sidecar-only deployment; falling open to `super.summarize()` matches
-     * upstream's own default and needs no new configuration to succeed when
-     * one genuinely exists).
-     *
-     * Never builds its own request — `streamSummary()`'s own
-     * `redactMessages()` call is skipped entirely, and without this, so is
-     * every credential check: `input` is upstream's own replayed prefix,
-     * sent to whatever provider upstream's `summarize()` calls internally,
-     * exactly as the structured path's replayed prefix would be without the
-     * same fix.
+     * Use upstream prose summarization for prose mode and sidecar failOpen recovery.
+     * Redact replayed input here because this path bypasses streamSummary.
      */
     async nativeFallback(input, agent, signal, hasSecret) {
         const redactedInput = {
@@ -811,23 +762,8 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
         // call site, not closing a live gap for that specific shape the way
         // it genuinely does for the sidecar's own wire-sourced blocks.
         const neutralized = this.neutralizeAcrossBlocks(this.withSecretProvenance(this.redactRawBlocks(result.summary), hasSecret));
-        // Deliverables backstop for this path too (Codex review, PR #26 round
-        // 8): unlike the sidecar path's documented scope boundary
-        // (docs/05-sidecar-protocol.md §8 — a protocol gap needing every sidecar
-        // implementation to update), this path runs entirely locally and has
-        // every source message available, the same as the structured path does.
-        // Returning the model's raw prose completely unchecked means a model
-        // that simply omits Q1 from its own summary has that question pruned
-        // away with nothing to catch it — reproducing the exact incident this
-        // whole mechanism exists to close, on the one path (the DEFAULT for any
-        // deployment not opted into structured summarization, and every sidecar
-        // failOpen target) that had no backstop of any kind until now.
-        // Checked against the fully-processed text, not the model's raw output —
-        // what matters is what the FINAL checkpoint says, and redaction/
-        // neutralization change none of a real label's own characters. Built
-        // from the untouched `input`, not `redactedInput` — anchors trace back
-        // to shadowed session content via seq, same as every other caller of
-        // buildAnchors().
+        // Check deliverable labels against the final processed prose.
+        // Build anchors from original source messages so their sequence provenance survives.
         const anchors = this.buildAnchors(agent.session, input, hasSecret ? 'secret' : undefined);
         const finalText = coalescedBlockText(neutralized);
         // A genuine, carry-forward-safe `## Anchors` block, filtered to just
@@ -839,7 +775,7 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
         // leading-label check (the label genuinely opens its own sentence)
         // while preserving nothing about what Q1 actually asked; (2) even when
         // the note DID fire, "## Unresolved Deliverables" is not a heading
-        // `anchorsFromCheckpoint()` (anchors.ts) recognizes, so on a LATER
+        // `anchorsFromCheckpoint()` (anchors.js) recognizes, so on a LATER
         // compaction the checkpoint has no `## Anchors` block for it to find —
         // a second prose summary omitting the same deliverable loses it for
         // good, with no further backstop; (3) unresolvedDeliverables()
@@ -905,7 +841,7 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
             : undefined;
         const anchorBlock = renderAnchors(deliverableAnchors, overflowUri);
         // The short nudge note is unchanged in SHAPE from round 8 — round 9's
-        // full-text-embedding fix is reversed (anchors.ts's own doc on
+        // full-text-embedding fix is reversed (anchors.js's own doc on
         // `unmentionedDeliverableNote()`): with the Anchors block above now
         // preserving full text unconditionally, this only decides whether to
         // add an immediate prompt for the model working THIS round, exactly
@@ -938,15 +874,8 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
         };
     }
     /**
-     * The REST sidecar path (docs/05-sidecar-protocol.md §2/§4): delegate
-     * summarization to an external service instead of a local
-     * `ctx.llm.stream()` call. Reached only when `!hasSecret` — see the
-     * caller's own comment in `summarize()`.
-     *
-     * `this.sidecarClient!`: the non-null assertion is safe by construction
-     * — this method is reachable only when `sidecar.mode !== 'native'`, and
-     * the constructor throws for `'grpc'`, so the only mode that reaches
-     * here is `'rest'`, for which the constructor always builds a client.
+     * Delegate summarization to the REST sidecar only for non-secret input.
+     * The constructor creates the client for REST mode and rejects gRPC mode.
      */
     async sidecarSummarize(input, agent, signal) {
         const session = agent.session;
@@ -1077,32 +1006,14 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
             };
         };
         const redactedAnchors = [...anchors.all, ...deliverableOverflow].map(redactAnchor);
-        // Redacted right before it leaves the process (docs/05 §8: "送出前對
-        // surface 做 secret redaction"), on the DOMAIN message via the same
-        // redactMessages() the native paths already use, BEFORE mapping to
-        // wire form — not per wire block after mapping (Codex review): a
-        // credential split across two adjacent text/reasoning blocks (e.g.
-        // `sk-` + 12 chars in one block, the rest in the next) is invisible
-        // to a per-block redaction pass, even though the sidecar receives
-        // both fragments and can reconstruct
-        // it — exactly the "adjacent-block fragmentation" shape
-        // redactMessages()'s own coalescing already exists to close for the
-        // native paths (see its own doc comment); this wire path was
-        // reintroducing that exact, already-fixed-once vulnerability class.
-        // redactMessages() is called per-node (a one-message array), not once
-        // over `input.messages`, because `node.message` is not reliably the
-        // SAME object reference `input.messages` holds — alignSeqsToMessages()
-        // re-derives messages from the session's own events independently —
-        // so there is no reliable way to align a separately-redacted
-        // input.messages copy back onto `nodes` by identity.
+        // Redact each domain message before wire conversion, coalescing adjacent blocks.
+        // Re-derived surface messages cannot reliably be matched to input.messages by identity.
         const surface = nodes.map((node) => {
             const [redactedMessage] = this.redactMessages([node.message]);
             const wireNode = toSurfaceNode({ seq: node.seq, message: redactedMessage ?? node.message });
             return { ...wireNode, content: this.coalesceRedactWire(wireNode.content) };
         });
-        // Both optional on the wire; the CompactRequest schema has no `system`/
-        // `tools` fields at all (docs/05 §4) — only `surface` — so there is
-        // nothing to redact or send for those two.
+        // The request carries surface nodes; system and tools are not wire fields.
         const target = this.resolveSummarizationTarget(agent);
         // specFor() itself requires a real AbortSignal (it forwards to
         // ctx.llm.resolveModelInfo(), which does too) — but THIS method's own
@@ -1117,20 +1028,9 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
         const spec = target === undefined
             ? null
             : await this.specFor(agent, target, signal ?? new AbortController().signal);
-        // context_limit/output_reserve are REQUIRED wire fields (docs/05 §4's
-        // own CompactRequest.required list), not optional ones — confirmed
-        // against the actual schema (Codex review; an earlier version treated
-        // them as omittable like provider/model, which are genuinely
-        // optional). Manual and context-overflow compaction can both reach
-        // this method with unresolvable model capacity (compactNow() never
-        // gates on specFor() the way the pressure path's own compactIfNeeded()
-        // does), so there is no way to always have a real number here — and
-        // sending a GUESSED one would misinform the sidecar about the model's
-        // real context window, worse than not sending the field at all. A
-        // request this code cannot build to spec would fail schema validation
-        // against any real, conformant sidecar anyway, so failing open locally
-        // — without ever spending a network round trip on a request destined
-        // to be rejected — is strictly better than attempting it.
+        // context_limit and output_reserve are required wire fields.
+        // If model capacity cannot be resolved, fail open locally without dispatching
+        // a request with guessed limits.
         if (target === undefined || spec === null) {
             return this.sidecarFailOpen(input, agent, signal, 'cannot resolve a summarization target/model capacity, which the sidecar wire protocol '
                 + 'requires (context_limit/output_reserve are required CompactRequest fields)', 'context.sidecar_call_failed', 
@@ -1183,10 +1083,8 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
             // reuse its own reason rather than discarding it (Codex review).
             return this.sidecarFailOpen(input, agent, signal, `sidecar call failed: ${String(error)}`, 'context.sidecar_call_failed', error instanceof SidecarRejectedError ? error.reason : 'network', error instanceof SidecarRejectedError ? error.status : undefined);
         }
-        // CAS check #1, right after the call (docs/05 §2: "檢查
-        // response.sourceGeneration === snapshot.generation，不符 → 視為
-        // changed" — a mismatched-but-200 response gets the identical
-        // treatment a 409 does).
+        // Reject a response whose source generation differs from the request snapshot,
+        // including successful HTTP responses with stale generations.
         if (response.source_generation !== ifMatch) {
             this.stats.sidecarChanged += 1;
             this.ctx.logger.warn(`adaptive compaction: context.sidecar_response_changed — source_generation `
@@ -1215,80 +1113,21 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
         if (!shaMatches) {
             return this.sidecarFailOpen(input, agent, signal, 'summary_sha256 did not match the canonical hash of the returned summary', 'security.sidecar_response_rejected', 'malformed');
         }
-        // CAS check #2, immediately before returning — a second, independent
-        // read, not reused from check #1 (docs/05 §2: "harness 在收到回應後與
-        // 上游 commit 前各比一次"). There is no hook later than this method's
-        // own return: `assertStable()`/`commitCompactionBody()` run entirely
-        // inside upstream's `compactSurfaceRegion()` after `summarize()`
-        // returns.
+        // Re-read the generation immediately before returning.
+        // Upstream performs the final stability check and commit after this method returns.
         if (String(session.surface.replaceGeneration) !== ifMatch) {
             this.stats.sidecarChanged += 1;
             this.ctx.logger.warn('adaptive compaction: context.sidecar_response_changed — surface generation moved '
                 + 'while awaiting the sidecar response');
             throw new SidecarChangedError('sidecar: surface generation changed while the sidecar was responding');
         }
-        // provider/model are a fixed, honest sentinel, not the declined/
-        // resolved target — echoing the request's own provider/model would
-        // misleadingly imply the sidecar actually routed there, when it may
-        // have used something else entirely (matches SEC-06's own
-        // `{provider:'none', model:'anchors-only'}` precedent). llmStreamCall
-        // is never set (docs/05 §4 and docs/03 §4.7 both forbid it — a sidecar
-        // call consumed no local ctx.llm.stream() call) and neither is
-        // rawOutput (would misleadingly imply warm-cache replay provenance
-        // that does not exist for this path).
-        // coalesceRedactWire() runs FIRST, on the wire array — a credential
-        // split across two adjacent wire blocks is still one contiguous
-        // string there; fromWireContentBlocks() would already have lost that
-        // adjacency information by turning each block into its own TextBlock.
-        // redactRawBlocks() still runs after, as a second, already-established
-        // backstop (cheap and idempotent against already-clean text).
-        // neutralizeAnchorImpersonation() runs last, over the fully-assembled
-        // text, UNCONDITIONALLY — no exemption for any substring, including
-        // redactedAnchors' own text (Codex review, PR #26 round 13, reversing
-        // round 12's own exemptSubstrings mechanism): a sidecar response
-        // containing (by coincidence or by design) a literal "## Anchors"
-        // heading would otherwise get the SAME trust a genuine local anchor
-        // block gets from anchorsFromCheckpoint() on the next compaction — the
-        // KNOWN SCOPE BOUNDARY comment above this method already establishes
-        // the sidecar's own task-tracking is unverified; this closes the
-        // sharper case where its OUTPUT actively impersonates this package's
-        // own machine-verified rendering (Codex review, PR #26 round 4). Round
-        // 12 exempted each anchor's own text from this rewrite so a legitimate
-        // multiline deliverable containing a "## Anchors"-shaped line of its
-        // own would not get mangled — but that same exemption let a malicious
-        // sidecar wrap a real anchor's own heading-shaped line and immediately
-        // append attacker-authored `- deliverable: ...` lines right after it:
-        // anchorsFromCheckpoint() trusts everything shaped like an anchor line
-        // after ANY surviving heading, with no way to tell why that heading
-        // survived, so protecting the heading protected whatever followed it
-        // too. See the anchors-contract check below (moved here, after this
-        // point) for how the "don't silently corrupt an already-verified
-        // anchor" half of round 12's own motivation is preserved without the
-        // exemption.
+        // Sidecar results use sentinel provider/model values and no local stream or raw-output
+        // provenance. Coalesce and redact wire blocks before conversion, redact again after
+        // conversion, then neutralize every external Anchors heading without exemptions.
         const summary = this.neutralizeAcrossBlocks(this.redactRawBlocks(fromWireContentBlocks(this.coalesceRedactWire(response.summary), this.artifactResolver(session))));
-        // Anchors contract — INT-18 (docs/05 §4: "anchors[] 中的每一條都必須逐字
-        // 出現在回傳的 summary 中；harness 會驗（若缺，視為 summary 失敗）"). Checked
-        // against redactedAnchors, matching what the request actually sent —
-        // the sidecar was never shown the unredacted originals, so comparing
-        // against those would demand verbatim reproduction of text it never saw.
-        // Checked against the FINAL `summary` — after redaction AND
-        // neutralizeAnchorImpersonation() have both already run (Codex review,
-        // PR #26 round 13) — not the raw wire response: neutralization above is
-        // now fully unconditional, so if it happens to rewrite a heading-shaped
-        // line that was legitimately part of a verified anchor's own text, this
-        // check catches that HERE, as a genuine "not reproduced verbatim"
-        // failure, and falls open exactly like any other malformed response.
-        // That is the same "would rather lose an anchor than risk trusting
-        // something unverified" bias I12 itself is built on, applied to the one
-        // sidecar-specific step (neutralization) capable of altering
-        // already-verified text after the fact — not a bespoke carve-out.
-        //
-        // This is NOT the same guarantee reconcileOpenDeliverables() (summary.ts)
-        // gives the local path (see the KNOWN SCOPE BOUNDARY comment above this
-        // method): verbatim presence in the final summary proves the sidecar
-        // didn't drop the QUESTION's text, not that its own response still
-        // marks that deliverable unanswered rather than, say, only mentioning it
-        // while narrating a different, unrelated item as done.
+        // Check required redacted anchors against the final redacted and neutralized summary.
+        // A rewritten heading within a real anchor also fails preservation and triggers
+        // failOpen. Verbatim question text does not prove the sidecar tracks it as unanswered.
         const missing = findMissingAnchors(redactedAnchors, coalescedBlockText(summary));
         if (missing.length > 0) {
             return this.sidecarFailOpen(input, agent, signal, `${missing.length} anchor(s) were not reproduced verbatim in the sidecar's response`, 'context.sidecar_anchors_missing', 'malformed');
@@ -1306,7 +1145,7 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
         // authoritative check: only HERE, after fromWireContentBlocks() has
         // actually run scrubUnresolvableUris() with a real resolver, is it
         // possible to tell "a genuine citation" from "a reference that didn't
-        // pan out" — sidecar-client.ts has no artifact-store access to make
+        // pan out" — sidecar-client.js has no artifact-store access to make
         // that call itself.
         const hasSubstance = summary.some(block => (block.type === 'text' && block.text.trim().length > 0 && block.text !== UNRESOLVABLE));
         if (!hasSubstance) {
@@ -1320,7 +1159,7 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
         // findMissingAnchors() only proves THIS round's response reproduced
         // every anchor somewhere in its prose, but neither that one-time proof
         // nor the sidecar's own prose text leaves anything
-        // anchorsFromCheckpoint() (anchors.ts) can recognize on a LATER
+        // anchorsFromCheckpoint() (anchors.js) can recognize on a LATER
         // compaction — a sidecar response never carries a real "## Anchors"
         // heading (neutralizeAnchorImpersonation() above deliberately breaks
         // any that would look like one, round 4/13's own impersonation
@@ -1476,11 +1315,11 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
      * Extends `anchors.lastAssistantSeq` to also cover a qualifying answer
      * sitting in the RETAINED tail, not just the shadowed range
      * `extractAnchors()` itself scanned (Codex review, PR #26 round 16).
-     * `selectAdaptiveRange()` (range.ts) picks its cut purely by token
+     * `selectAdaptiveRange()` (range.js) picks its cut purely by token
      * budget (plus checkpoint-absorption and tool-pairing balance) — nothing
      * checks "does this cut split a question from its own answer," so a
      * deliverable asked in the shadowed prefix can have its own answer land
-     * in the retained tail instead. `unresolvedDeliverables()` (anchors.ts)
+     * in the retained tail instead. `unresolvedDeliverables()` (anchors.js)
      * would otherwise see only the shadowed-side maximum, conclude no
      * assistant turn followed the question, and force it open even though
      * the model can still see it answered, right there in its own current
@@ -2397,13 +2236,8 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
             sessionId: agent.session.id,
             purpose: 'compaction',
             ...(this.adaptive.summary.jsonObject ? {compactionJsonObject: true} : {}),
-            // Optional unofficial schema metadata: unlike the official purpose
-            // field, GenerateOptions does not define responseSchema. A
-            // provider adapter that knows how to constrain generation to a JSON
-            // schema reads this and does so; one that does not silently ignores
-            // it, same as any other unrecognized property. See enforceSchema's
-            // own doc in types.ts for why this exists (R27's residual gap) and
-            // what was verified live before defaulting it on.
+            // Optional responseSchema metadata is interpreted only by adapters that support it.
+            // GenerateOptions does not define this field; other adapters ignore it.
             ...(this.adaptive.summary.enforceSchema
                 ? {
                     responseSchema: {
@@ -2531,4 +2365,3 @@ function addUsage(first, second) {
 /** Upstream's own default, restated so the unreachable fallback is a real number. */
 const DEFAULT_RETAIN_RATIO = 0.16;
 export default AdaptiveCompactionEngine;
-//# sourceMappingURL=index.js.map

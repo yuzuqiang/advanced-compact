@@ -7,10 +7,7 @@
  *
  * @module @adaptive-compact/dsh-artifact-store/blob
  */
-// Requires Node >=18.14.0 (>=19.4.0 on the v19 line) — the package's own
-// "engines" field enforces this floor; an older Node fails to load this
-// module at all rather than at any specific call, which is the point of
-// declaring it there instead of discovering it at runtime.
+// node:buffer isUtf8 checks stored bytes before decoding.
 import { isUtf8 as nodeIsUtf8 } from 'node:buffer';
 import { createHash, randomUUID } from 'node:crypto';
 import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync, writeSync, } from 'node:fs';
@@ -353,4 +350,3 @@ export class BlobStore {
         }
     }
 }
-//# sourceMappingURL=blob.js.map

@@ -88,7 +88,7 @@ const ENTROPY_THRESHOLD = 4.0;
 // base64 chars>" shields exactly the first 64 characters as a "trusted"
 // URI, leaving a real secret concatenated right after it too short (< 32
 // chars) for HIGH_ENTROPY to ever see on its own — an attacker-craftable
-// bypass, not a hypothetical one. uri.ts's own isArtifactUri() is fully
+// bypass, not a hypothetical one. uri.js's own isArtifactUri() is fully
 // anchored (^...$) for the same reason: a real digest is exactly 64 lower-
 // hex characters, never more.
 //
@@ -274,4 +274,3 @@ export function redactBuffer(buffer, resolveArtifact) {
         return { buffer, hits: {} };
     return { buffer: Buffer.from(outcome.text, 'utf8'), hits: outcome.hits };
 }
-//# sourceMappingURL=redact.js.map
